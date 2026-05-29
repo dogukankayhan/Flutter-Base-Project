@@ -1,0 +1,10 @@
+{
+  "home": {
+    "title": "Home",
+    "welcome": "Welcome, {name}"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel"
+  }
+}

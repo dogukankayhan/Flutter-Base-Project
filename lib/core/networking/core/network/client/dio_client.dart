@@ -1,0 +1,100 @@
+import 'package:dio/dio.dart';
+import '../../config/api_config.dart';
+import '../interceptors/auth_interceptor.dart';
+import '../interceptors/refresh_token_interceptor.dart';
+import '../interceptors/connectivity_interceptor.dart';
+import '../interceptors/rate_limiter_interceptor.dart';
+import '../interceptors/cache_interceptor.dart';
+import '../interceptors/retry_interceptor.dart';
+import '../interceptors/logging_interceptor.dart';
+import '../connectivity/network_info.dart';
+import 'http_client_interface.dart';
+
+class DioClient implements HttpClient {
+  @override
+  late final Dio dio;
+
+  DioClient(
+    ApiConfig config, {
+    Future<String?> Function()? authTokenProvider,
+    Future<String?> Function()? refreshTokenProvider,
+    Future<String?> Function(String refreshToken)? refreshTokenFunction,
+    void Function(String accessToken, String? refreshToken)? onTokenRefreshed,
+    NetworkInfo? networkInfo,
+  }) {
+    dio = Dio(
+      BaseOptions(
+        baseUrl: config.baseUrl,
+        connectTimeout: config.connectTimeout,
+        receiveTimeout: config.receiveTimeout,
+        sendTimeout: config.sendTimeout,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (config.headers != null) ...config.headers!,
+          if (config.defaultHeaders != null) ...config.defaultHeaders!,
+        },
+        responseType: ResponseType.json,
+      ),
+    );
+
+    // Interceptor sırası önemli:
+    // 1. Connectivity → İnternet yoksa hemen reject, boşuna devam etme
+    // 2. Auth         → Token ekle
+    // 3. RateLimiter  → Rate limit kontrolü
+    // 4. Cache        → Cache'de varsa server'a gitme
+    // 5. Retry        → Hata olursa tekrar dene
+    // 6. Refresh      → 401'de token yenile ve request'i tekrar at
+    // 7. Logging      → En sonda, her şeyi logla
+
+    // 1. Connectivity
+    if (networkInfo != null) {
+      dio.interceptors.add(ConnectivityInterceptor(networkInfo: networkInfo));
+    }
+
+    // 2. Auth
+    if (authTokenProvider != null) {
+      dio.interceptors.add(
+        AuthInterceptor(authTokenProvider: authTokenProvider),
+      );
+    }
+
+    // 3. Rate Limiter
+    if (config.enableRateLimiter) {
+      dio.interceptors.add(RateLimiterInterceptor());
+    }
+
+    // 4. Cache
+    if (config.enableCache) {
+      dio.interceptors.add(CacheInterceptor());
+    }
+
+    // 5. Retry
+    dio.interceptors.add(
+      RetryInterceptor(
+        dio: dio,
+        maxRetries: config.maxRetries,
+        baseDelay: config.retryBaseDelay,
+      ),
+    );
+
+    // 6. Refresh Token
+    if (refreshTokenFunction != null &&
+        refreshTokenProvider != null &&
+        onTokenRefreshed != null) {
+      dio.interceptors.add(
+        RefreshTokenInterceptor(
+          dio: dio,
+          refreshToken: refreshTokenFunction,
+          getRefreshToken: refreshTokenProvider,
+          onTokenRefreshed: onTokenRefreshed,
+        ),
+      );
+    }
+
+    // 7. Logging (en son)
+    if (config.enableLogging) {
+      dio.interceptors.add(LoggingInterceptor());
+    }
+  }
+}

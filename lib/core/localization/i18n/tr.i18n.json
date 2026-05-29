@@ -1,0 +1,10 @@
+{
+  "home": {
+    "title": "Ana Sayfa",
+    "welcome": "Hoş geldin, {name}"
+  },
+  "common": {
+    "ok": "Tamam",
+    "cancel": "İptal"
+  }
+}
