@@ -1,0 +1,20 @@
+name: flutter_kit_purchase
+description: In-app purchase — RevenueCat integration, subscriptions, consumables.
+version: 0.0.1
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  purchases_flutter: ^9.13.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

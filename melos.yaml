@@ -1,0 +1,27 @@
+name: flutter_base_kit
+
+packages:
+  - apps/mobile
+  - packages/*
+
+command:
+  bootstrap: {}
+
+scripts:
+  analyze:
+    run: dart analyze
+    exec:
+      concurrency: 4
+    description: Analyze all packages
+
+  test:
+    run: flutter test
+    exec:
+      concurrency: 2
+    description: Run tests in all packages
+
+  format:
+    run: dart format .
+    exec:
+      concurrency: 4
+    description: Format all packages
