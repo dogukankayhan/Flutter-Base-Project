@@ -2,6 +2,12 @@
   "dart.projectSearchDepth": 4,
   "dart.enableSdkFormatter": true,
   "dart.lineLength": 120,
+  "dart.analysisExcludedFolders": [
+    "build",
+    "apps/mobile/build",
+    "apps/mobile/ios/Pods",
+    "apps/mobile/macos/Pods"
+  ],
   "files.exclude": {
     "**/build": true,
     "**/.dart_tool": true,
