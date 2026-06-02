@@ -6,9 +6,9 @@
 import 'dart:async' as _i6;
 
 import 'package:dio/dio.dart' as _i2;
-import 'package:flutter_base_kit/core/networking/core/network/client/http_client_interface.dart'
+import 'package:flutter_kit_network/core/network/client/http_client_interface.dart'
     as _i3;
-import 'package:flutter_base_kit/core/networking/core/network/serializer/serializer_interface.dart'
+import 'package:flutter_kit_network/core/network/serializer/serializer_interface.dart'
     as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i5;

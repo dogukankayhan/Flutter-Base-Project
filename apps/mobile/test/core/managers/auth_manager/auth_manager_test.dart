@@ -1,19 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/manager/auth_manager.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/login_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/register_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/me_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/update_profile_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/logout_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/refresh_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/apple_sign_in_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/google_sign_in_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/guest_sign_in_usecase.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/entity/auth_entity.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/entity/profile_entity.dart';
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/token/token_store.dart';
-import 'package:flutter_base_kit/core/networking/core/network/error/api_error.dart';
-import 'package:flutter_base_kit/core/networking/core/utils/result.dart';
+import 'package:flutter_kit_auth/auth/manager/auth_manager.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/login_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/register_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/me_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/update_profile_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/logout_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/refresh_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/apple_sign_in_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/google_sign_in_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/guest_sign_in_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/entity/auth_entity.dart';
+import 'package:flutter_kit_auth/auth/domain/entity/profile_entity.dart';
+import 'package:flutter_kit_auth/auth/token/token_store.dart';
+import 'package:flutter_kit_network/core/network/error/api_error.dart';
+import 'package:flutter_kit_network/core/utils/result.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
@@ -72,7 +72,7 @@ void main() {
 
   setUp(() {
     // Singleton'ı her test için sıfırla
-    AuthManager.resetForTesting();
+    
 
     // Mockito'nun Result<T,E> tipini dummy olarak üretebilmesi için
     provideDummy<Result<AuthTokens, ApiError>>(
@@ -104,7 +104,7 @@ void main() {
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
 
       // Act
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -118,9 +118,9 @@ void main() {
       );
 
       // Assert
-      expect(AuthManager.instance.isLoggedIn, true);
-      expect(AuthManager.instance.tokens, testTokens);
-      expect(AuthManager.instance.profile, testProfile);
+      expect(authManager.isLoggedIn, true);
+      expect(authManager.tokens, testTokens);
+      expect(authManager.profile, testProfile);
       verify(mockTokenStore.read()).called(1);
       verify(mockMeUseCase()).called(1);
     });
@@ -130,7 +130,7 @@ void main() {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
 
       // Act
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -144,9 +144,9 @@ void main() {
       );
 
       // Assert
-      expect(AuthManager.instance.isLoggedIn, false);
-      expect(AuthManager.instance.tokens, null);
-      expect(AuthManager.instance.profile, null);
+      expect(authManager.isLoggedIn, false);
+      expect(authManager.tokens, null);
+      expect(authManager.profile, null);
       verify(mockTokenStore.read()).called(1);
       verifyNever(mockMeUseCase());
     });
@@ -155,7 +155,7 @@ void main() {
   group('AuthManager Login Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -167,7 +167,7 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      authManager = AuthManager.instance;
+      
     });
 
     test('should login successfully', () async {
@@ -232,7 +232,7 @@ void main() {
   group('AuthManager Register Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -244,7 +244,7 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      authManager = AuthManager.instance;
+      
     });
 
     test('should register successfully', () async {
@@ -306,7 +306,7 @@ void main() {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => testTokens);
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -318,7 +318,7 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      authManager = AuthManager.instance;
+      
     });
 
     test('should fetch profile successfully', () async {
@@ -380,7 +380,7 @@ void main() {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => testTokens);
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -392,7 +392,7 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      authManager = AuthManager.instance;
+      
     });
 
     test('should logout successfully', () async {
@@ -433,7 +433,7 @@ void main() {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => testTokens);
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -445,7 +445,7 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      authManager = AuthManager.instance;
+      
     });
 
     test('should refresh tokens successfully', () async {
@@ -508,7 +508,7 @@ void main() {
   group('AuthManager Token Management Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -520,7 +520,7 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      authManager = AuthManager.instance;
+      
     });
 
     test('should save tokens', () async {
@@ -551,7 +551,7 @@ void main() {
   group('AuthManager State Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      await AuthManager.init(
+      authManager = await AuthManager.create(
         loginUseCase: mockLoginUseCase,
         registerUseCase: mockRegisterUseCase,
         meUseCase: mockMeUseCase,
@@ -563,7 +563,7 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      authManager = AuthManager.instance;
+      
     });
 
     test('should report not logged in when no tokens', () {

@@ -5,35 +5,35 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
 
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/entity/auth_entity.dart'
+import 'package:flutter_kit_auth/auth/domain/entity/auth_entity.dart'
     as _i6;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/entity/profile_entity.dart'
+import 'package:flutter_kit_auth/auth/domain/entity/profile_entity.dart'
     as _i11;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/repository/auth_repository.dart'
+import 'package:flutter_kit_auth/auth/domain/repository/auth_repository.dart'
     as _i2;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/apple_sign_in_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/apple_sign_in_usecase.dart'
     as _i15;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/google_sign_in_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/google_sign_in_usecase.dart'
     as _i16;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/guest_sign_in_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/guest_sign_in_usecase.dart'
     as _i17;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/login_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/login_usecase.dart'
     as _i3;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/logout_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/logout_usecase.dart'
     as _i13;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/me_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/me_usecase.dart'
     as _i10;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/refresh_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/refresh_usecase.dart'
     as _i14;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/register_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/register_usecase.dart'
     as _i9;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/domain/usecase/update_profile_usecase.dart'
+import 'package:flutter_kit_auth/auth/domain/usecase/update_profile_usecase.dart'
     as _i12;
-import 'package:flutter_base_kit/core/managers/auth_manager/auth/token/token_store.dart'
+import 'package:flutter_kit_auth/auth/token/token_store.dart'
     as _i18;
-import 'package:flutter_base_kit/core/networking/core/network/error/api_error.dart'
+import 'package:flutter_kit_network/core/network/error/api_error.dart'
     as _i7;
-import 'package:flutter_base_kit/core/networking/core/utils/result.dart' as _i5;
+import 'package:flutter_kit_network/core/utils/result.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:mockito/src/dummies.dart' as _i8;
 

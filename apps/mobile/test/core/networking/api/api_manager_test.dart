@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_base_kit/core/networking/core/network/api/api_manager.dart';
-import 'package:flutter_base_kit/core/networking/core/network/client/http_client_interface.dart';
-import 'package:flutter_base_kit/core/networking/core/network/serializer/serializer_interface.dart';
-import 'package:flutter_base_kit/core/networking/core/network/error/api_exception.dart';
+import 'package:flutter_kit_network/core/network/api/api_manager.dart';
+import 'package:flutter_kit_network/core/network/client/http_client_interface.dart';
+import 'package:flutter_kit_network/core/network/serializer/serializer_interface.dart';
+import 'package:flutter_kit_network/core/network/error/api_exception.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 
