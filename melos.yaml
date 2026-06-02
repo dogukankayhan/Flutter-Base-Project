@@ -9,19 +9,25 @@ command:
 
 scripts:
   analyze:
-    run: dart analyze
     exec:
+      run: dart analyze .
       concurrency: 4
     description: Analyze all packages
 
   test:
-    run: flutter test
     exec:
+      run: flutter test
       concurrency: 2
     description: Run tests in all packages
 
   format:
-    run: dart format .
     exec:
+      run: dart format .
       concurrency: 4
     description: Format all packages
+
+  format:check:
+    exec:
+      run: dart format --output=none --set-exit-if-changed .
+      concurrency: 4
+    description: Check formatting without modifying files
