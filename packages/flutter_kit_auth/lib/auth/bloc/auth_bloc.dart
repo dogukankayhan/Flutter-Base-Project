@@ -21,8 +21,14 @@ class AuthBloc extends BaseBloc<AuthEvent, AuthState> {
   void _onAuthManagerChanged() => add(const AuthStatusChanged());
 
   void _onStatusChanged(AuthStatusChanged event, Emitter<AuthState> emit) {
+    // Reset to initial state on logout — avoids copyWith(profile: null) bug
+    // where null is ignored and stale profile remains.
+    if (!_authManager.isLoggedIn) {
+      emit(const AuthState());
+      return;
+    }
     emit(state.copyWith(
-      isAuthenticated: _authManager.isLoggedIn,
+      isAuthenticated: true,
       profile: _authManager.profile,
     ));
   }

@@ -512,13 +512,44 @@ After adding a new key, run `dart run slang` to regenerate.
 
 ## Validator — flutter_kit_core
 
-```dart
-final validator = FieldValidator<String>()
-  .required()
-  .email()
-  .maxLength(100);
+`FieldValidator` takes a list of `Validator` rules. `Validators` provides static factories for all built-in rules.
 
-TextFormField(validator: validator.build())
+```dart
+// Single field
+final emailValidator = FieldValidator<String>([
+  Validators.required(),
+  Validators.email(),
+  Validators.maxLength(100),
+]);
+
+// Validate — returns first error message or null
+final error = emailValidator.validate(state.email);
+
+// Validate all — returns ValidationResult with every error
+final result = emailValidator.validateAll(state.password);
+result.isValid;   // bool
+result.errors;    // List<String>
+
+// Extend with more rules
+final strictValidator = emailValidator.and([Validators.pattern(r'\.com$')]);
+
+// Use in a TextFormField
+TextFormField(
+  validator: (value) => emailValidator.validate(value),
+)
+```
+
+`FormValidator` tracks multiple fields and overall form validity:
+
+```dart
+FormValidator get _form => FormValidator({
+  'email':    () => emailValidator.validate(state.email),
+  'password': () => passwordValidator.validate(state.password),
+});
+
+bool canSubmit = _form.isValid;
+String? emailError = _form.errorFor('email');
+Map<String, String> active = _form.activeErrors; // only failing fields
 ```
 
 **Available rules:** `required`, `email`, `minLength`, `maxLength`, `min`, `max`, `range`, `pattern`, `equals`, `custom`

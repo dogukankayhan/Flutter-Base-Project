@@ -7,7 +7,7 @@ class SubscriptionPlan {
   final String productId;
   final SubscriptionPeriod period;
   final String localizedPrice;
-  final String? savingsLabel; // örn: "%40 tasarruf"
+  final String? savingsLabel;
   final List<String> perks;
 
   const SubscriptionPlan({
@@ -20,7 +20,7 @@ class SubscriptionPlan {
   });
 
   String get periodLabel => switch (period) {
-        SubscriptionPeriod.monthly => 'Aylık',
-        SubscriptionPeriod.annual  => 'Yıllık',
+        SubscriptionPeriod.monthly => 'Monthly',
+        SubscriptionPeriod.annual  => 'Annual',
       };
 }

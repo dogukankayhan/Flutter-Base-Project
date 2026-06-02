@@ -14,7 +14,7 @@ class RevenueCatManager {
   bool _initialized = false;
   bool get isInitialized => _initialized;
 
-  // ── Başlatma ──────────────────────────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────────────────────────
 
   Future<void> init() async {
     if (_initialized) return;
@@ -29,21 +29,21 @@ class RevenueCatManager {
     _initialized = true;
   }
 
-  /// Kullanıcı girişi yapınca çağır — satın alımlar kullanıcıya bağlanır.
+  /// Call after the user logs in — links purchases to the user account.
   Future<void> logIn(String userId) async {
     _assertInitialized();
     await Purchases.logIn(userId);
   }
 
-  /// Kullanıcı çıkış yapınca çağır.
+  /// Call after the user logs out.
   Future<void> logOut() async {
     _assertInitialized();
     await Purchases.logOut();
   }
 
-  // ── Ürün & Paket bilgileri ────────────────────────────────────────────────
+  // ── Products & Packages ───────────────────────────────────────────────────
 
-  /// RevenueCat'ten mevcut teklifleri çeker.
+  /// Fetches the current offerings from RevenueCat.
   Future<Offerings?> fetchOfferings() async {
     _assertInitialized();
     try {
@@ -54,7 +54,8 @@ class RevenueCatManager {
     }
   }
 
-  /// Offerings'ten kristal paketleri oluşturur.
+  /// Builds consumable coin packs from the current offering.
+  /// Returns placeholder packs if RevenueCat is unreachable.
   List<CrystalPack> buildCrystalPacks(Offerings? offerings) {
     final current = offerings?.current;
     if (current == null) return _fallbackCrystalPacks();
@@ -65,21 +66,22 @@ class RevenueCatManager {
       final price = package.storeProduct.priceString;
       switch (id) {
         case StoreProductIds.crystalSmall:
-          result.add(CrystalPack(package: package, productId: id, title: '100 Kristal', crystalAmount: 100, localizedPrice: price));
+          result.add(CrystalPack(package: package, productId: id, title: '100 Coins', crystalAmount: 100, localizedPrice: price));
         case StoreProductIds.crystalMedium:
-          result.add(CrystalPack(package: package, productId: id, title: '550 Kristal', crystalAmount: 550, localizedPrice: price, bonusLabel: '+50 Bonus'));
+          result.add(CrystalPack(package: package, productId: id, title: '550 Coins', crystalAmount: 550, localizedPrice: price, bonusLabel: '+50 Bonus'));
         case StoreProductIds.crystalLarge:
-          result.add(CrystalPack(package: package, productId: id, title: '1.200 Kristal', crystalAmount: 1200, localizedPrice: price, bonusLabel: '+200 Bonus', isBestValue: true));
+          result.add(CrystalPack(package: package, productId: id, title: '1,200 Coins', crystalAmount: 1200, localizedPrice: price, bonusLabel: '+200 Bonus', isBestValue: true));
         case StoreProductIds.crystalMega:
-          result.add(CrystalPack(package: package, productId: id, title: '2.500 Kristal', crystalAmount: 2500, localizedPrice: price, bonusLabel: '+500 Bonus'));
+          result.add(CrystalPack(package: package, productId: id, title: '2,500 Coins', crystalAmount: 2500, localizedPrice: price, bonusLabel: '+500 Bonus'));
         case StoreProductIds.crystalUltra:
-          result.add(CrystalPack(package: package, productId: id, title: '6.500 Kristal', crystalAmount: 6500, localizedPrice: price, bonusLabel: '+1500 Bonus'));
+          result.add(CrystalPack(package: package, productId: id, title: '6,500 Coins', crystalAmount: 6500, localizedPrice: price, bonusLabel: '+1,500 Bonus'));
       }
     }
     return result.isEmpty ? _fallbackCrystalPacks() : result;
   }
 
-  /// Offerings'ten abonelik planlarını oluşturur.
+  /// Builds subscription plans from the current offering.
+  /// Returns placeholder plans if RevenueCat is unreachable.
   List<SubscriptionPlan> buildSubscriptionPlans(Offerings? offerings) {
     final current = offerings?.current;
     if (current == null) return _fallbackSubscriptionPlans();
@@ -95,7 +97,7 @@ class RevenueCatManager {
             productId: id,
             period: SubscriptionPeriod.monthly,
             localizedPrice: price,
-            perks: ['Reklamsız oyun', '10% inşaat hız bonusu', 'Özel komutan çerçevesi'],
+            perks: ['Ad-free experience', '10% speed bonus', 'Exclusive avatar frame'],
           ));
         case StoreProductIds.subAnnual:
           result.add(SubscriptionPlan(
@@ -103,17 +105,17 @@ class RevenueCatManager {
             productId: id,
             period: SubscriptionPeriod.annual,
             localizedPrice: price,
-            savingsLabel: '%40 tasarruf',
-            perks: ['Reklamsız oyun', '25% inşaat hız bonusu', 'Özel komutan çerçevesi', 'Aylık 200 ücretsiz kristal', 'VIP destek'],
+            savingsLabel: '40% off',
+            perks: ['Ad-free experience', '25% speed bonus', 'Exclusive avatar frame', '200 free coins / month', 'VIP support'],
           ));
       }
     }
     return result.isEmpty ? _fallbackSubscriptionPlans() : result;
   }
 
-  // ── Satın alma ────────────────────────────────────────────────────────────
+  // ── Purchase ──────────────────────────────────────────────────────────────
 
-  /// Kristal paketi veya abonelik satın alır.
+  /// Purchases a consumable pack or subscription.
   Future<PurchaseResult> purchase(Package package) async {
     _assertInitialized();
     try {
@@ -128,18 +130,18 @@ class RevenueCatManager {
       }
       if (code == PurchasesErrorCode.networkError) {
         return const PurchaseFailure(
-          message: 'İnternet bağlantısı bulunamadı. Lütfen tekrar dene.',
+          message: 'No internet connection. Please try again.',
           isNetworkError: true,
         );
       }
       if (code == PurchasesErrorCode.productAlreadyPurchasedError) {
-        return const PurchaseFailure(message: 'Bu ürün zaten satın alınmış.');
+        return const PurchaseFailure(message: 'This product has already been purchased.');
       }
-      return PurchaseFailure(message: e.message ?? 'Bilinmeyen bir hata oluştu.');
+      return PurchaseFailure(message: e.message ?? 'An unknown error occurred.');
     }
   }
 
-  /// Önceki satın alımları geri yükler (App Store zorunluluğu).
+  /// Restores previous purchases (required by App Store guidelines).
   Future<PurchaseResult> restorePurchases() async {
     _assertInitialized();
     try {
@@ -147,15 +149,14 @@ class RevenueCatManager {
       final hasPremium = info.entitlements.active.containsKey(StoreProductIds.entitlementPremium);
       return RestoreSuccess(hasPremium: hasPremium);
     } on PlatformException catch (e) {
-      return PurchaseFailure(message: e.message ?? 'Geri yükleme başarısız.');
+      return PurchaseFailure(message: e.message ?? 'Restore failed.');
     }
   }
 
-  // ── Entitlement kontrolü ─────────────────────────────────────────────────
+  // ── Entitlement ───────────────────────────────────────────────────────────
 
-  /// Kullanıcının premium yetkisi olup olmadığını kontrol eder.
-  /// ⚠️ Yetki gerektiren işlemler için her zaman bunu kullan,
-  ///    yerel state'e güvenme.
+  /// Returns true if the user has an active premium entitlement.
+  /// Always call this instead of trusting local state.
   Future<bool> hasPremiumEntitlement() async {
     _assertInitialized();
     try {
@@ -175,7 +176,7 @@ class RevenueCatManager {
     }
   }
 
-  // ── Yardımcılar ───────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   PurchaseResult _validateEntitlement(CustomerInfo info, String productId) {
     final isSubscription = productId == StoreProductIds.subMonthly ||
@@ -184,7 +185,7 @@ class RevenueCatManager {
       final active = info.entitlements.active.containsKey(StoreProductIds.entitlementPremium);
       if (!active) {
         return const PurchaseFailure(
-          message: 'Satın alma tamamlandı fakat yetki doğrulanamadı. Lütfen geri yükle.',
+          message: 'Purchase completed but entitlement could not be verified. Please restore.',
         );
       }
     }
@@ -192,17 +193,17 @@ class RevenueCatManager {
   }
 
   void _assertInitialized() {
-    assert(_initialized, 'RevenueCatManager.init() henüz çağrılmadı.');
+    assert(_initialized, 'RevenueCatManager.init() has not been called yet.');
   }
 
-  // ── Fallback placeholder'lar ──────────────────────────────────────────────
+  // ── Fallback placeholders ─────────────────────────────────────────────────
 
   List<CrystalPack> _fallbackCrystalPacks() => [
-    const CrystalPack(productId: StoreProductIds.crystalSmall,  title: '100 Kristal',   crystalAmount: 100,  localizedPrice: '—'),
-    const CrystalPack(productId: StoreProductIds.crystalMedium, title: '550 Kristal',   crystalAmount: 550,  localizedPrice: '—', bonusLabel: '+50 Bonus'),
-    const CrystalPack(productId: StoreProductIds.crystalLarge,  title: '1.200 Kristal', crystalAmount: 1200, localizedPrice: '—', bonusLabel: '+200 Bonus', isBestValue: true),
-    const CrystalPack(productId: StoreProductIds.crystalMega,   title: '2.500 Kristal', crystalAmount: 2500, localizedPrice: '—', bonusLabel: '+500 Bonus'),
-    const CrystalPack(productId: StoreProductIds.crystalUltra,  title: '6.500 Kristal', crystalAmount: 6500, localizedPrice: '—', bonusLabel: '+1500 Bonus'),
+    const CrystalPack(productId: StoreProductIds.crystalSmall,  title: '100 Coins',    crystalAmount: 100,  localizedPrice: '—'),
+    const CrystalPack(productId: StoreProductIds.crystalMedium, title: '550 Coins',    crystalAmount: 550,  localizedPrice: '—', bonusLabel: '+50 Bonus'),
+    const CrystalPack(productId: StoreProductIds.crystalLarge,  title: '1,200 Coins',  crystalAmount: 1200, localizedPrice: '—', bonusLabel: '+200 Bonus', isBestValue: true),
+    const CrystalPack(productId: StoreProductIds.crystalMega,   title: '2,500 Coins',  crystalAmount: 2500, localizedPrice: '—', bonusLabel: '+500 Bonus'),
+    const CrystalPack(productId: StoreProductIds.crystalUltra,  title: '6,500 Coins',  crystalAmount: 6500, localizedPrice: '—', bonusLabel: '+1,500 Bonus'),
   ];
 
   List<SubscriptionPlan> _fallbackSubscriptionPlans() => [
@@ -210,14 +211,14 @@ class RevenueCatManager {
       productId: StoreProductIds.subMonthly,
       period: SubscriptionPeriod.monthly,
       localizedPrice: '—',
-      perks: ['Reklamsız oyun', '10% inşaat hız bonusu', 'Özel komutan çerçevesi'],
+      perks: ['Ad-free experience', '10% speed bonus', 'Exclusive avatar frame'],
     ),
     const SubscriptionPlan(
       productId: StoreProductIds.subAnnual,
       period: SubscriptionPeriod.annual,
       localizedPrice: '—',
-      savingsLabel: '%40 tasarruf',
-      perks: ['Reklamsız oyun', '25% inşaat hız bonusu', 'Özel komutan çerçevesi', 'Aylık 200 ücretsiz kristal', 'VIP destek'],
+      savingsLabel: '40% off',
+      perks: ['Ad-free experience', '25% speed bonus', 'Exclusive avatar frame', '200 free coins / month', 'VIP support'],
     ),
   ];
 }

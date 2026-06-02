@@ -1,13 +1,14 @@
 import 'package:purchases_flutter/purchases_flutter.dart';
 
+/// A consumable coin pack available for purchase.
 class CrystalPack {
   final Package? package;
   final String productId;
   final String title;
   final int crystalAmount;
-  final String? bonusLabel;    // örn: "+%10 bonus"
+  final String? bonusLabel;
   final bool isBestValue;
-  final String localizedPrice; // RevenueCat'ten gelen fiyat
+  final String localizedPrice;
 
   const CrystalPack({
     this.package,
