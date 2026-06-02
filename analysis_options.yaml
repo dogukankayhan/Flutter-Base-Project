@@ -1,0 +1,10 @@
+analyzer:
+  exclude:
+    - "**/build/**"
+    - "**/.*/**"
+    - "**/.dart_tool/**"
+    - "**/ios/Pods/**"
+    - "**/macos/Pods/**"
+    - "**/generated/**"
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"

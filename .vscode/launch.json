@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "mobile — Dev",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
+      "program": "lib/main_dev.dart",
+      "args": ["--flavor", "dev"]
+    },
+    {
+      "name": "mobile — Staging",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
+      "program": "lib/main_staging.dart",
+      "args": ["--flavor", "staging"]
+    },
+    {
+      "name": "mobile — Prod",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
+      "program": "lib/main_prod.dart",
+      "args": ["--flavor", "prod"]
+    }
+  ]
+}
