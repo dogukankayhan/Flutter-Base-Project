@@ -61,7 +61,7 @@ class _MyAppState extends State<MyApp> {
             final flutterLocale = TranslationProvider.of(ctx).flutterLocale;
 
             return ScreenUtilInit(
-              designSize: const Size(1280, 800),
+              designSize: const Size(390, 844),
               minTextAdapt: true,
               splitScreenMode: true,
               builder: (context, child) {

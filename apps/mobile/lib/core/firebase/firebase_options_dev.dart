@@ -58,11 +58,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'YOUR_IOS_API_KEY',
-    appId: 'YOUR_IOS_APP_ID',
-    messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-    projectId: 'YOUR_PROJECT_ID',
-    storageBucket: 'YOUR_STORAGE_BUCKET',
+    apiKey: 'AIzaSyCY_nI3QFlo0swl20XOPvsJofshTJ_9DI8',
+    appId: '1:142428987721:ios:369490cd26771a726cba98',
+    messagingSenderId: '142428987721',
+    projectId: 'flutter-base-project-4a3c4',
+    storageBucket: 'flutter-base-project-4a3c4.firebasestorage.app',
     iosBundleId: 'com.base.project.dev',
   );
 }

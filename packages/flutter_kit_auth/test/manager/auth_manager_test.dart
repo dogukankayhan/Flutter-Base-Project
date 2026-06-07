@@ -71,9 +71,6 @@ void main() {
   );
 
   setUp(() {
-    // Singleton'ı her test için sıfırla
-    
-
     // Mockito'nun Result<T,E> tipini dummy olarak üretebilmesi için
     provideDummy<Result<AuthTokens, ApiError>>(
       Ok(AuthTokens(accessToken: '', refreshToken: null)),
@@ -167,7 +164,6 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      
     });
 
     test('should login successfully', () async {
@@ -244,7 +240,6 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      
     });
 
     test('should register successfully', () async {
@@ -318,7 +313,6 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      
     });
 
     test('should fetch profile successfully', () async {
@@ -392,7 +386,6 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      
     });
 
     test('should logout successfully', () async {
@@ -445,7 +438,6 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      
     });
 
     test('should refresh tokens successfully', () async {
@@ -520,7 +512,6 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      
     });
 
     test('should save tokens', () async {
@@ -563,7 +554,6 @@ void main() {
         guestSignInUseCase: mockGuestSignInUseCase,
         tokenStore: mockTokenStore,
       );
-      
     });
 
     test('should report not logged in when no tokens', () {

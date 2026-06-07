@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:go_router/go_router.dart';
 import '../initialize/initialize.dart';
+import '../managers/navigation_manager/app_coordinator.dart';
 import 'package:flutter_kit_firebase/notification/notification_manager.dart';
 import '../security/jailbreak_block_app.dart';
 import 'splash_view.dart';
@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    context.go('/home');
+    AppCoordinator.instance.home.show();
   }
 
   @override

@@ -9,7 +9,7 @@ import 'package:flutter_kit_network/core/utils/result.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 
-import 'auth_manager_test.mocks.dart';
+import '../manager/auth_manager_test.mocks.dart';
 
 void main() {
   setUpAll(TestWidgetsFlutterBinding.ensureInitialized);

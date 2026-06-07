@@ -19,3 +19,4 @@ export 'auth/data/repository/auth_repository_impl.dart';
 export 'auth/bloc/auth_bloc.dart';
 export 'auth/bloc/auth_event.dart';
 export 'auth/bloc/auth_state.dart';
+export 'auth_setup.dart';

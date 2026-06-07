@@ -6,7 +6,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Jailbreak Detection - iOS & Android', () {
-    const platform = MethodChannel('com.example.app/security');
+    const platform = MethodChannel('com.base.project/security');
 
     tearDown(() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

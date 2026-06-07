@@ -51,8 +51,8 @@ class Initialize {
 
   static Future<void> _initOrientation() =>
       SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
       ]);
 
   static Future<void> _initFirebase(AppEnvironment env) async {

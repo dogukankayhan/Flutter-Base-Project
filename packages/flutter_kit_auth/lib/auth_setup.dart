@@ -23,9 +23,11 @@ Future<void> setupAuth({
   required ApiManager apiManager,
   required TokenStore tokenStore,
 }) async {
-  getIt.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(apiManager),
-  );
+  if (!getIt.isRegistered<AuthRemoteDataSource>()) {
+    getIt.registerLazySingleton<AuthRemoteDataSource>(
+      () => AuthRemoteDataSourceImpl(apiManager),
+    );
+  }
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(getIt<AuthRemoteDataSource>()),
   );
