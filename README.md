@@ -58,7 +58,7 @@ melos bootstrap
 ```
 apps/mobile/lib/
 ├── core/
-│   ├── config/             # AppEnvironment, AppConfig (native channel), TmdbConfig
+│   ├── config/             # AppEnvironment, AppConfig (native channel)
 │   ├── deeplink/           # DeepLinkManager
 │   ├── di/                 # Injection.init() — all DI registrations
 │   ├── firebase/           # FirebaseOptions per flavor (dev/staging/prod)
@@ -71,7 +71,6 @@ apps/mobile/lib/
 └── features/
     ├── login/
     ├── register/
-    ├── movies/
     ├── pokemon_home/
     ├── pokemon_detail/
     ├── pokemon_favorites/
@@ -105,25 +104,6 @@ AppConfig.instance.environment  // AppEnvironment enum
 ### Build-time Secrets
 
 Sensitive values (API keys, tokens) are passed via `--dart-define` at build time, never hardcoded.
-
-#### TMDB API Key
-
-The app uses TMDB (The Movie Database) for movie data. You need a TMDB account and a Bearer token:
-
-1. Sign up at [themoviedb.org](https://www.themoviedb.org)
-2. Go to **Settings → API** and copy your **API Read Access Token** (the long JWT, not the short v3 key)
-3. Pass it at run/build time:
-
-```bash
-flutter run --flavor dev -t lib/main_dev.dart --dart-define=TMDB_API_KEY=<your_bearer_token>
-```
-
-```dart
-// apps/mobile/lib/core/config/tmdb_config.dart
-static const apiKey = String.fromEnvironment('TMDB_API_KEY');
-```
-
-The token is sent as a Bearer header in movie API requests. Without it, all TMDB calls return 401.
 
 #### Firebase
 
