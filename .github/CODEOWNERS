@@ -1,0 +1,17 @@
+# Default: tüm dosyalar için otomatik reviewer ataması
+*                               @douzapps
+
+# Paket sahipliği
+/packages/flutter_kit_network/  @douzapps
+/packages/flutter_kit_core/     @douzapps
+/packages/flutter_kit_auth/     @douzapps
+/packages/flutter_kit_ui/       @douzapps
+/packages/flutter_kit_firebase/ @douzapps
+
+# CI/CD — workflow değişiklikleri her zaman review gerektirir
+/.github/                       @douzapps
+
+# Mimari konfigürasyonlar
+/melos.yaml                     @douzapps
+/pubspec.yaml                   @douzapps
+/analysis_options.yaml          @douzapps

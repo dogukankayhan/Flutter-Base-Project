@@ -2,25 +2,55 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Dev",
+      "name": "mobile — Dev",
       "request": "launch",
       "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
       "program": "lib/main_dev.dart",
       "args": ["--flavor", "dev"]
     },
     {
-      "name": "Staging",
+      "name": "mobile — Dev (Profile)",
       "request": "launch",
       "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
+      "program": "lib/main_dev.dart",
+      "args": ["--flavor", "dev"],
+      "flutterMode": "profile"
+    },
+    {
+      "name": "mobile — Staging",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
       "program": "lib/main_staging.dart",
       "args": ["--flavor", "staging"]
     },
     {
-      "name": "Prod",
+      "name": "mobile — Staging (Profile)",
       "request": "launch",
       "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
+      "program": "lib/main_staging.dart",
+      "args": ["--flavor", "staging"],
+      "flutterMode": "profile"
+    },
+    {
+      "name": "mobile — Prod",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
       "program": "lib/main_prod.dart",
       "args": ["--flavor", "prod"]
+    },
+    {
+      "name": "mobile — Prod (Profile)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "${workspaceFolder}/apps/mobile",
+      "program": "lib/main_prod.dart",
+      "args": ["--flavor", "prod"],
+      "flutterMode": "profile"
     }
   ]
 }

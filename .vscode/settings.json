@@ -1,5 +1,25 @@
 {
+  "dart.projectSearchDepth": 4,
+  "dart.enableSdkFormatter": true,
+  "dart.lineLength": 120,
+  "dart.analysisExcludedFolders": [
+    "build",
+    "apps/mobile/build",
+    "apps/mobile/ios/Pods",
+    "apps/mobile/macos/Pods"
+  ],
   "files.exclude": {
-    "**/*.g.dart": true
+    "**/build": true,
+    "**/.dart_tool": true,
+    "**/.flutter-plugins": true,
+    "**/.flutter-plugins-dependencies": true,
+    "**/*.g.dart": true,
+    "**/*.freezed.dart": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.dart_tool": true,
+    "**/ios/Pods": true,
+    "**/macos/Pods": true
   }
 }

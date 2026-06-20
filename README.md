@@ -1,65 +1,86 @@
-# Flutter Base Project
+# Flutter Base Kit — Monorepo
 
-Production-ready Flutter starter template. Includes Clean Architecture, BLoC pattern, Firebase, RevenueCat, and security infrastructure.
-
----
-
-## Table of Contents
-
-- [Project Structure](#project-structure)
-- [Flavors](#flavors)
-- [Startup Flow](#startup-flow)
-- [Dependency Injection](#dependency-injection)
-- [Networking — ApiManager](#networking--apimanager)
-- [Auth — AuthManager](#auth--authmanager)
-- [BLoC Architecture](#bloc-architecture)
-- [Navigation](#navigation)
-- [Firebase](#firebase)
-- [Notification Manager](#notification-manager)
-- [RevenueCat](#revenuecat)
-- [Security — Jailbreak / Root Detection](#security--jailbreak--root-detection)
-- [Theme](#theme)
-- [Localization](#localization)
-- [Validator](#validator)
-- [Adding a New Feature](#adding-a-new-feature)
+Production-ready Flutter monorepo template. Clean Architecture, BLoC pattern, Firebase, and security infrastructure.
 
 ---
 
-## Project Structure
+## Monorepo Structure
 
 ```
-lib/
+flutter_base_kit/
+├── melos.yaml                    # Melos workspace definition
+├── pubspec.yaml                  # Workspace root (pub workspaces)
+├── scripts/
+│   └── gen_feature.dart          # Interactive feature scaffold generator
+├── packages/
+│   ├── flutter_kit_core/         # BaseBloc, BaseCubit, BaseState, validators
+│   ├── flutter_kit_network/      # Dio, interceptors, Result<T,E>, ApiManager
+│   ├── flutter_kit_auth/         # AuthManager, AuthBloc, token store
+│   ├── flutter_kit_firebase/     # FCM, deep link callback
+│   └── flutter_kit_ui/           # Theme, design tokens, ThemeCubit
+└── apps/
+    └── mobile/                   # Flutter application
+        ├── lib/
+        │   ├── core/             # DI, navigation, config, splash, localization
+        │   └── features/         # Feature modules
+        └── test/                 # Unit + bloc tests
+```
+
+### Package Dependency Graph
+
+```
+flutter_kit_core        (independent)
+flutter_kit_network     (independent)
+flutter_kit_ui          (independent)
+flutter_kit_firebase    (independent)
+flutter_kit_auth        → flutter_kit_network, flutter_kit_core
+apps/mobile             → all 5 packages
+```
+
+> `flutter_kit_firebase` must NOT import `flutter_kit_auth` or any navigation package — circular dependency. Use the callback pattern instead (see Deep Link section).
+
+---
+
+## Setup
+
+```bash
+# Activate Melos globally (one-time)
+dart pub global activate melos
+
+# Bootstrap workspace from the root directory
+melos bootstrap
+```
+
+---
+
+## App Structure
+
+```
+apps/mobile/lib/
 ├── core/
-│   ├── base_bloc/          # BaseBloc, BaseCubit, BaseBlocView, PaginatedBloc
-│   ├── config/             # AppEnvironment, AppConfig
+│   ├── config/             # AppEnvironment, AppConfig (native channel), TmdbConfig
 │   ├── deeplink/           # DeepLinkManager
-│   ├── di/                 # GetIt injection setup
-│   ├── domain/             # BaseRepository, BaseUseCase
-│   ├── enums/              # SvgEnum, PngEnum (asset helpers)
-│   ├── firebase/           # FirebaseOptions per flavor
-│   ├── initialize/         # Initialize — app startup orchestrator
-│   ├── localization/       # slang_flutter i18n
+│   ├── di/                 # Injection.init() — all DI registrations
+│   ├── firebase/           # FirebaseOptions per flavor (dev/staging/prod)
+│   ├── initialize/         # Initialize — startup orchestrator
+│   ├── localization/       # slang_flutter i18n files
 │   ├── managers/
-│   │   ├── auth_manager/   # AuthManager + AuthBloc + Social Auth
 │   │   ├── device_info_manager/
-│   │   ├── navigation_manager/  # AppRouter, GoRouter, guards
-│   │   ├── notification_manager/
-│   │   └── revenuecat_manager/
-│   ├── networking/         # ApiManager, interceptors, Result, ApiError
-│   ├── security/           # JailbreakDetector, JailbreakBlockApp
-│   ├── splash/             # SplashScreen, SplashCoordinator
-│   ├── theme/              # AppTheme, AppColors, AppTextTheme
-│   ├── utils/validator/    # Form and field validation system
-│   └── widgets/            # AppImage, AuthGate, LoadingOverlay
+│   │   └── navigation_manager/ # AppNavigator, GoRouter, auth guard
+│   └── splash/             # SplashScreen, SplashNavigator
 └── features/
-    └── home/               # Example feature (placeholder)
+    ├── login/
+    ├── register/
+    ├── movies/
+    ├── pokemon_home/
+    ├── pokemon_detail/
+    ├── pokemon_favorites/
+    └── favorites/
 ```
 
 ---
 
 ## Flavors
-
-Three environments are available: `dev`, `staging`, `prod`.
 
 | Flavor | Entry Point | Firebase |
 |--------|-------------|----------|
@@ -67,374 +88,258 @@ Three environments are available: `dev`, `staging`, `prod`.
 | staging | `lib/main_staging.dart` | `firebase_options_staging.dart` |
 | prod | `lib/main_prod.dart` | `firebase_options_prod.dart` |
 
-**Running:**
-
 ```bash
-# Development
 flutter run --flavor dev -t lib/main_dev.dart
-
-# Staging
 flutter run --flavor staging -t lib/main_staging.dart
-
-# Production
 flutter run --flavor prod -t lib/main_prod.dart
 ```
 
-**Accessing environment info via `AppConfig`:**
+`AppConfig` reads `baseUrl`, `appName`, and `googleServerClientId` from the native layer (`strings.xml` / `Info.plist`):
 
 ```dart
-AppConfig.instance.baseUrl       // API base URL
-AppConfig.instance.isProd        // bool
-AppConfig.instance.environment   // AppEnvironment enum
+AppConfig.instance.baseUrl
+AppConfig.instance.isProd
+AppConfig.instance.environment  // AppEnvironment enum
 ```
+
+### Build-time Secrets
+
+Sensitive values (API keys, tokens) are passed via `--dart-define` at build time, never hardcoded.
+
+#### TMDB API Key
+
+The app uses TMDB (The Movie Database) for movie data. You need a TMDB account and a Bearer token:
+
+1. Sign up at [themoviedb.org](https://www.themoviedb.org)
+2. Go to **Settings → API** and copy your **API Read Access Token** (the long JWT, not the short v3 key)
+3. Pass it at run/build time:
+
+```bash
+flutter run --flavor dev -t lib/main_dev.dart --dart-define=TMDB_API_KEY=<your_bearer_token>
+```
+
+```dart
+// apps/mobile/lib/core/config/tmdb_config.dart
+static const apiKey = String.fromEnvironment('TMDB_API_KEY');
+```
+
+The token is sent as a Bearer header in movie API requests. Without it, all TMDB calls return 401.
+
+#### Firebase
+
+Each flavor requires its own `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) from the Firebase console. These files are gitignored and must be added manually:
+
+1. Create three Firebase projects (or one with multiple apps): `dev`, `staging`, `prod`
+2. Download the config files for each and place them:
+
+```
+android/app/src/dev/google-services.json
+android/app/src/staging/google-services.json
+android/app/src/prod/google-services.json
+
+ios/config/dev/GoogleService-Info.plist
+ios/config/staging/GoogleService-Info.plist
+ios/config/prod/GoogleService-Info.plist
+```
+
+3. Regenerate the Dart options files:
+
+```bash
+# Run once per Firebase project
+flutterfire configure --project=my-project-dev \
+  --out=apps/mobile/lib/core/firebase/firebase_options_dev.dart
+
+flutterfire configure --project=my-project-staging \
+  --out=apps/mobile/lib/core/firebase/firebase_options_staging.dart
+
+flutterfire configure --project=my-project-prod \
+  --out=apps/mobile/lib/core/firebase/firebase_options_prod.dart
+```
+
+The correct `FirebaseOptions` file is selected automatically at startup based on the active flavor.
 
 ---
 
 ## Startup Flow
 
-`Initialize.prepare(env)` → `runApp()` → `SplashScreen` → `Initialize.run()` → navigation
-
 ```
 main_dev.dart
     └── mainCommon(AppEnvironment.dev)
             ├── Initialize.prepare(env)
-            │       ├── AppConfig.init(env)
-            │       ├── Firebase.initializeApp(options)
-            │       ├── Injection.init()           ← all DI
-            │       └── LocaleSettings + ThemeCubit
+            │       ├── _initBinding()           ← preserve splash
+            │       ├── _initOrientation()
+            │       ├── AppConfig.init(env)       ← read native config
+            │       ├── _initFirebase(env)        ← calls setupFirebase()
+            │       ├── _initDI(env)              ← Injection.init(apiConfig:)
+            │       └── _initLocaleAndTheme()
             └── runApp(...)
 
-SplashScreen (displayed)
+SplashScreen (shown)
     └── Initialize.run()
-            ├── NotificationManager.instance.init()
-            └── JailbreakDetector.isDeviceCompromised()
-                    ├── compromised → runApp(JailbreakBlockApp())
-                    └── safe       → context.go('/home')
+            ├── setupNotifications()
+            └── route to ShellNavigator.dashboardPath
 ```
 
 ---
 
 ## Dependency Injection
 
-GetIt is used. All registrations are in `lib/core/di/injection.dart`.
+GetIt is used. All registrations live in `apps/mobile/lib/core/di/injection.dart`.
+
+Module registration order is **mandatory**:
+
+```
+1. setupNetworkModule   → FlutterSecureStorage, TokenStore, ApiManager
+2. setupAuthModule      → AuthRemoteDataSource, AuthRepository, AuthManager, AuthBloc
+                          (requires ApiManager and TokenStore)
+3. setupNavigationModule → GoRouter, AppNavigator
+                           (requires AuthBloc)
+```
+
+Changing this order causes `Object not registered` at runtime.
 
 ```dart
-// Registration (inside Injection.init())
-getIt.registerLazySingleton<AuthManager>(() => AuthManager.instance);
-getIt.registerLazySingleton<GoRouter>(() { ... });
-
-// Usage (from anywhere)
+// Access from anywhere
 final authManager = getIt<AuthManager>();
 final router = getIt<GoRouter>();
 ```
 
-**Adding a new service:**
-
-```dart
-// Add to injection.dart
-getIt.registerLazySingleton<MyService>(() => MyService());
-
-// Usage in a Bloc
-class MyBloc extends BaseBloc<MyEvent, MyState> {
-  final MyService _service = getIt<MyService>();
-  ...
-}
-```
-
 ---
 
-## Networking — ApiManager
+## Networking — flutter_kit_network
 
-Built on top of `DioClient`. All requests pass through the `ApiManager` interface.
+Built on `DioClient`. All requests go through the `ApiManager` interface.
 
-### Interceptors (run automatically)
+### Interceptors
 
 | Interceptor | Responsibility |
 |---|---|
 | `AuthInterceptor` | Attaches `Authorization: Bearer <token>` to every request |
 | `RefreshTokenInterceptor` | Refreshes the token on 401 and retries the request |
-| `ConnectivityInterceptor` | Throws an error when there is no internet connection |
+| `ConnectivityInterceptor` | Throws an error when there is no internet |
 | `RetryInterceptor` | Retries up to 3x on network errors |
 | `CacheInterceptor` | Caches GET responses |
 | `RateLimiterInterceptor` | Flood protection per endpoint |
-| `LoggingInterceptor` | Logs requests/responses in dev environment |
+| `LoggingInterceptor` | Logs requests/responses in non-prod environments |
 
-### Usage
+### Token Flow
 
-`ApiManager` is not used directly; the **repository** → **usecase** → **bloc** chain is followed.
+`AuthInterceptor` → `TokenStore.readAccess()` → `Authorization: Bearer <token>`
 
-```dart
-// Inside a repository implementation
-final response = await apiManager.get<Map<String, dynamic>>(
-  path: '/users/me',
-);
-
-final response = await apiManager.post<Map<String, dynamic>>(
-  path: '/auth/login',
-  body: {'email': email, 'password': password},
-);
-
-final response = await apiManager.patch<Map<String, dynamic>>(
-  path: '/users/me',
-  body: {'firstName': 'Ali'},
-);
-```
+On 401 → `RefreshTokenInterceptor` → `/auth/refresh` (bare Dio, no circular dependency) → token saved → request retried
 
 ### Result Pattern
 
-Every API response returns `Result<T, ApiError>`, handled with `when`:
+Every async operation returns `Result<T, ApiError>`. Never throws, never uses try/catch at the call site:
 
 ```dart
-final result = await apiManager.get<Map<String, dynamic>>(path: '/items');
-
 result.when(
-  ok: (data) {
-    final item = MyModel.fromJson(data);
-    emit(state.copyWith(item: item, isLoading: false));
-  },
-  err: (error) {
-    emit(state.copyWith(errorMessage: error.message, isLoading: false));
-  },
+  ok: (data) => emit(state.copyWith(isLoading: false, items: data)),
+  err: (e) => emit(state.copyWith(isLoading: false, errorMessage: e.message)),
 );
 ```
 
-### ApiError
+Common mistake — forgetting to emit in the `err` branch leaves `isLoading: true` forever:
 
 ```dart
-error.message        // user-facing error message
-error.statusCode     // HTTP status code (nullable)
-error.type           // ApiErrorType enum
+result.when(
+  ok: (data) => emit(state.copyWith(data: data)),
+  err: (_) {},  // BUG: isLoading never becomes false
+);
 ```
 
 ---
 
-## Auth — AuthManager
+## Auth — flutter_kit_auth
 
-Singleton. Manages token storage, session state, and all authentication operations.
-
-`AuthManager.init(...)` is called during `Injection.init()`. On startup, persisted tokens are loaded automatically and a `/me` request is made.
-
-### Access
+`AuthManager` handles token storage, session state, and all auth operations. Created via `AuthManager.create()` and registered in GetIt — no static singleton.
 
 ```dart
-final auth = AuthManager.instance;   // getIt<AuthManager>() also works
+final auth = getIt<AuthManager>();
 
 auth.isLoggedIn    // bool
-auth.profile       // Profile? (id, email, firstName, lastName, avatarUrl)
-auth.tokens        // AuthTokens? (accessToken, refreshToken)
+auth.profile       // Profile?
+auth.tokens        // AuthTokens?
 ```
 
 ### Methods
 
 ```dart
-// Email / password
 await auth.login(email, password);
 await auth.register(email: email, password: password);
 await auth.logout();
-
-// Social auth
 await auth.signInWithApple(idToken);
 await auth.signInWithGoogle(idToken);
 await auth.signInAsGuest();
-
-// Profile
 await auth.fetchMe();
 await auth.updateProfile({'firstName': 'Ali'});
-
-// Token
-await auth.refreshIfNeeded();
 ```
 
-All methods return `Result<void, ApiError>`:
+All methods return `Result<T, ApiError>`:
 
 ```dart
 final result = await auth.login(email, password);
 result.when(
-  ok: (_) => context.go('/home'),
-  err: (error) => showSnackbar(error.message),
+  ok: (_) => HomeNavigator.show(context),
+  err: (e) => showSnackbar(e.message),
 );
 ```
 
 ### AuthBloc
 
-Listens to `AuthManager` and keeps auth state reactive. The router and global UI subscribe here.
+Listens to `AuthManager` and keeps auth state reactive:
 
 ```dart
-// Already registered in Injection.init()
-getIt.registerLazySingleton<AuthBloc>(() => AuthBloc());
-
-// Access
-final authBloc = getIt<AuthBloc>();
 authBloc.state.isAuthenticated
 authBloc.state.profile
-
-// Dispatch an event
 authBloc.add(const AuthLogoutRequested());
 ```
 
-### Token Management
-
-Tokens are stored encrypted via `flutter_secure_storage`. `RefreshTokenInterceptor` automatically refreshes on 401; if refresh fails, the session is cleared and the router redirects to login.
-
 ---
 
-## BLoC Architecture
+## BLoC Architecture — flutter_kit_core
 
-### Layers
+### Base Classes
 
 ```
-BaseBloc / BaseCubit
-    └── authManager  → getIt<AuthManager>()   (auto-injected)
-    └── apiManager   → getIt<ApiManager>()    (auto-injected)
+BaseBloc<E, S extends BaseState>
+    └── onReady()    → post-frame callback, use for initial data load
+    └── onInit()     → called when bloc is created
+
+BaseCubit<S extends BaseState>
+    └── safeEmit()   → skips emit if cubit is already closed (prevents crash in async callbacks)
 
 BaseState
-    └── isLoading    → LoadingOverlay shown automatically
+    └── isLoading    → shows LoadingOverlay automatically
     └── isValid      → for form validation
     └── errorMessage → error state
-
-BaseBlocView<C, S>
-    └── create       → creates and disposes the bloc
-    └── builder      → provides access to state and bloc
-    └── activeKey    → distinguishes multiple screens of the same type
-    └── onInit       → called when the bloc is created
-    └── onReady      → called after widget renders (post-frame)
-    └── onDispose    → called when the screen closes
 ```
 
-### Feature BLoC Structure
-
-```
-features/my_feature/
-├── bloc/
-│   ├── my_feature_event.dart
-│   ├── my_feature_state.dart
-│   └── my_feature_bloc.dart
-└── view/
-    └── my_feature_screen.dart
-```
-
-### Defining State
+Always use `safeEmit()` instead of `emit()` inside async callbacks in a Cubit:
 
 ```dart
-class MyState extends BaseState {
-  final List<MyItem> items;
-  final MyItem? selectedItem;
-
-  const MyState({
-    this.items = const [],
-    this.selectedItem,
-    super.isLoading,
-    super.errorMessage,
-  });
-
-  MyState copyWith({
-    List<MyItem>? items,
-    MyItem? selectedItem,
-    bool? isLoading,
-    String? errorMessage,
-  }) => MyState(
-    items: items ?? this.items,
-    selectedItem: selectedItem ?? this.selectedItem,
-    isLoading: isLoading ?? this.isLoading,
-    errorMessage: errorMessage ?? this.errorMessage,
-  );
-
-  @override
-  List<Object?> get props => [...super.props, items, selectedItem];
+void doSomething() async {
+  final result = await someApi();
+  safeEmit(state.copyWith(data: result)); // no-op if cubit was closed while awaiting
 }
 ```
 
-### Defining Events
+### Screen Definition
 
-```dart
-sealed class MyEvent extends Equatable {
-  const MyEvent();
-  @override
-  List<Object?> get props => [];
-}
-
-class MyFetched extends MyEvent { const MyFetched(); }
-class MyRefreshed extends MyEvent { const MyRefreshed(); }
-class MyItemSelected extends MyEvent {
-  final String id;
-  const MyItemSelected(this.id);
-  @override
-  List<Object?> get props => [id];
-}
-```
-
-### Defining a Bloc
-
-```dart
-class MyBloc extends BaseBloc<MyEvent, MyState> {
-  MyBloc() : super(const MyState()) {
-    on<MyFetched>(_onFetched);
-    on<MyRefreshed>(_onRefreshed);
-    on<MyItemSelected>(_onItemSelected);
-  }
-
-  // Runs automatically after the widget renders — not in initState!
-  @override
-  void onReady() => add(const MyFetched());
-
-  Future<void> _onFetched(MyFetched event, Emitter<MyState> emit) async {
-    emit(state.copyWith(isLoading: true, errorMessage: null));
-
-    // In a real project, use a repository/usecase:
-    // final result = await _getItemsUseCase();
-    // result.when(
-    //   ok: (items) => emit(state.copyWith(isLoading: false, items: items)),
-    //   err: (error) => emit(state.copyWith(isLoading: false, errorMessage: error.message)),
-    // );
-
-    // Direct apiManager usage:
-    // final response = await apiManager.get<List<dynamic>>(path: '/items');
-    // response.when(...);
-  }
-
-  Future<void> _onRefreshed(MyRefreshed event, Emitter<MyState> emit) async {
-    emit(state.copyWith(isLoading: true));
-    await _onFetched(const MyFetched(), emit);
-  }
-
-  void _onItemSelected(MyItemSelected event, Emitter<MyState> emit) {
-    final item = state.items.firstWhere((i) => i.id == event.id);
-    emit(state.copyWith(selectedItem: item));
-  }
-}
-```
-
-### Defining a Screen
+Always use `BaseBlocView` — never construct a `Bloc()` directly inside a widget:
 
 ```dart
 class MyScreen extends StatelessWidget {
-  const MyScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return BaseBlocView<MyBloc, MyState>(
-      create: () => MyBloc(),
-      // LoadingOverlay is shown automatically when state.isLoading is true
+      create: () => MyBloc(getIt<MyRepository>()),
       builder: (context, state, bloc) {
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('My Screen'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () => bloc.add(const MyRefreshed()),
-              ),
-            ],
+          body: ListView.builder(
+            itemCount: state.items.length,
+            itemBuilder: (_, i) => ListTile(title: Text(state.items[i].title)),
           ),
-          body: state.errorMessage != null
-              ? Center(child: Text(state.errorMessage!))
-              : ListView.builder(
-                  itemCount: state.items.length,
-                  itemBuilder: (_, i) => ListTile(
-                    title: Text(state.items[i].title),
-                    onTap: () => bloc.add(MyItemSelected(state.items[i].id)),
-                  ),
-                ),
         );
       },
     );
@@ -442,9 +347,33 @@ class MyScreen extends StatelessWidget {
 }
 ```
 
+### Bloc Definition
+
+```dart
+class MyBloc extends BaseBloc<MyEvent, MyState> {
+  final MyRepository _repo;
+
+  MyBloc(this._repo) : super(const MyState()) {
+    on<MyFetched>(_onFetched);
+  }
+
+  @override
+  void onReady() => add(const MyFetched());
+
+  Future<void> _onFetched(MyFetched event, Emitter<MyState> emit) async {
+    emit(state.copyWith(isLoading: true));
+    final result = await _repo.getItems();
+    result.when(
+      ok: (items) => emit(state.copyWith(isLoading: false, items: items)),
+      err: (e) => emit(state.copyWith(isLoading: false, errorMessage: e.message)),
+    );
+  }
+}
+```
+
 ### PaginatedBloc
 
-A mixin for lists that require pagination:
+Infinite-scroll lists use `PaginatedBloc` mixin. Only `fetchPage()` and `paginatedState()` need to be implemented:
 
 ```dart
 class MyListBloc extends BaseBloc<MyListEvent, MyListState>
@@ -453,310 +382,122 @@ class MyListBloc extends BaseBloc<MyListEvent, MyListState>
   MyListBloc() : super(const MyListState()) {
     on<MyListStarted>((e, emit) => handleLoadInitial(emit));
     on<MyListLoadMore>((e, emit) => handleLoadMore(emit));
-    on<MyListRefreshed>((e, emit) => handleLoadInitial(emit));
   }
 
   @override
-  void onReady() => add(MyListStarted());
-
-  @override
   Future<(List<MyItem>, bool, int)> fetchPage(int offset, int size) async {
-    // Fetch a page from the API; return (items, hasMore, nextOffset)
-    final items = await _repository.getPage(offset: offset, size: size);
+    final items = await _repo.getPage(offset: offset, size: size);
     return (items, items.length >= size, offset + items.length);
   }
 
   @override
-  MyListState paginatedState({
-    List<MyItem>? items,
-    bool? hasMore,
-    int? nextOffset,
-    bool? isLoading,
-    String? errorMessage,
-    bool clearError = false,
-  }) => state.copyWith(
-    items: items,
-    hasMore: hasMore,
-    nextOffset: nextOffset,
-    isLoading: isLoading,
-    errorMessage: clearError ? null : errorMessage,
-  );
+  MyListState paginatedState({required List<MyItem> items, required bool hasMore,
+      required int offset, required bool isLoading, String? errorMessage}) =>
+      state.copyWith(items: items, hasMore: hasMore, offset: offset,
+          isLoading: isLoading, errorMessage: errorMessage);
 }
 ```
 
-### BaseCubit (without events)
+### ActiveCubitHelper
 
-Use `BaseCubit` for form screens:
-
-```dart
-class LoginCubit extends BaseCubit<LoginState> {
-  LoginCubit() : super(const LoginState());
-
-  void setEmail(String value) => safeEmit(state.copyWith(email: value));
-  void setPassword(String value) => safeEmit(state.copyWith(password: value));
-
-  Future<void> login() async {
-    safeEmit(state.copyWith(isLoading: true));
-    final result = await authManager.login(state.email, state.password);
-    result.when(
-      ok: (_) => safeEmit(state.copyWith(isLoading: false)),
-      err: (e) => safeEmit(state.copyWith(isLoading: false, errorMessage: e.message)),
-    );
-  }
-}
-```
-
-> `safeEmit` — does not emit if the bloc is already closed (prevents post-dispose crashes).
-
-### Active Key
-
-When multiple screens of the same type are open, distinguish them with `activeKey`:
+When the same screen type can be open more than once in the navigation stack (e.g., two different user profiles), use `activeKey` to distinguish instances in GetIt:
 
 ```dart
-BaseBlocView<DetailBloc, DetailState>(
-  create: () => DetailBloc(itemId),
-  activeKey: 'detail-$itemId',   // unique per instance
-  builder: (context, state, bloc) => ...,
-);
+BaseBlocView<ProfileCubit, ProfileState>(
+  activeKey: userId,
+  create: () => ProfileCubit(userId: userId),
+  ...
+)
 
 // Access from another widget
-final bloc = getActiveOrNull<DetailBloc>(key: 'detail-$itemId');
-bloc?.add(SomeEvent());
+final cubit = getActive<ProfileCubit>(key: userId);
 ```
+
+Without a key, `_default_ProfileCubit` is used — assumes a single instance of that type.
 
 ---
 
-## Navigation
+## Navigation — Navigator Pattern
 
-GoRouter is used. Access the router via `getIt<GoRouter>()`.
-
-### Adding a Route
-
-Add routes to `lib/core/managers/navigation_manager/app_router.dart`:
+GoRouter is used. Every feature owns a navigator file that is the single source of truth for its route path.
 
 ```dart
-GoRoute(
-  path: '/my-screen',
-  parentNavigatorKey: rootKey,
-  pageBuilder: (context, state) => fadeTransitionPage(
-    key: state.pageKey,
-    child: const MyScreen(),
-  ),
-),
-```
+// feature_navigator.dart
+class DashboardNavigator {
+  static const path = '/dashboard';
 
-### Coordinator Pattern (recommended)
+  static GoRoute route() => GoRoute(
+    path: path,
+    builder: (context, state) => const DashboardScreen(),
+  );
 
-```dart
-final class MyCoordinator {
-  MyCoordinator._();
-
-  static const String path = '/my-screen';
-
-  static GoRoute route(GlobalKey<NavigatorState> parentKey) {
-    return GoRoute(
-      path: path,
-      parentNavigatorKey: parentKey,
-      builder: (context, state) => const MyScreen(),
-    );
-  }
+  static void show(BuildContext context) => context.go(path);
 }
 ```
 
-### Navigating
+All navigators are registered with `AppNavigator`, which assembles the `GoRouter` and manages the auth redirect guard.
+
+**Rule: never call `context.go('/some-path')` directly. Always use the navigator:**
 
 ```dart
-context.go('/my-screen');               // Replace
-context.push('/my-screen');             // Push
-context.go('/my-screen', extra: data);  // Pass data
-context.pop();                          // Go back
-```
+// Correct
+DashboardNavigator.show(context);
 
-### Auth Guard
-
-Add a guard to routes that require authentication:
-
-```dart
-GoRoute(
-  path: '/protected',
-  redirect: (context, state) {
-    final auth = getIt<AuthBloc>().state;
-    return auth.isAuthenticated ? null : '/login';
-  },
-  builder: (context, state) => const ProtectedScreen(),
-),
+// Wrong — path strings must live only in the navigator
+context.go('/dashboard');
 ```
 
 ---
 
-## Firebase
-
-A separate `FirebaseOptions` file exists for each flavor:
+## Firebase — flutter_kit_firebase
 
 ```
-lib/core/firebase/
+apps/mobile/lib/core/firebase/
 ├── firebase_options_dev.dart
 ├── firebase_options_staging.dart
 └── firebase_options_prod.dart
 ```
 
-The correct file is selected automatically in `Initialize._initFirebase(env)`. No manual intervention required.
-
-**To connect a new Firebase project:**
+`setupFirebase(options:)` is called automatically in `Initialize._initFirebase(env)`.
 
 ```bash
-flutterfire configure --project=my-project-dev --out=lib/core/firebase/firebase_options_dev.dart
-flutterfire configure --project=my-project-prod --out=lib/core/firebase/firebase_options_prod.dart
+# Connect a new Firebase project
+flutterfire configure --project=my-project-dev \
+  --out=apps/mobile/lib/core/firebase/firebase_options_dev.dart
 ```
 
----
+### Notifications
 
-## Notification Manager
-
-FCM + `flutter_local_notifications` integration. Single instance: `NotificationManager.instance`.
-
-Initialised inside `Initialize.run()` (during the splash screen).
-
-### Channel System
-
-```dart
-enum AppNotificationChannel {
-  general,      // General notifications
-  promotional,  // Campaigns (with images)
-  critical,     // Critical / security notifications
-}
-```
-
-### FCM Token
+`setupNotifications()` is called during the splash screen (`Initialize.run()`).
 
 ```dart
 final token = await NotificationManager.instance.getToken();
-// Send the token to your backend
 ```
 
-### Payload Structure
+### Deep Link — Callback Pattern
 
-FCM data fields sent from the backend:
-
-| Field | Type | Description |
-|---|---|---|
-| `path` | String | Route to navigate to (`/home`, `/store`) |
-| `tab` | String | Tab index (e.g. `"2"`) |
-| `action_type` | String | `navigate`, `open_url`, `dismiss`, `approval` |
-| `image_url` | String | Notification image |
-| `url` | String | URL to open |
-| `params` | JSON String | Extra route parameters |
-| `approval_id` | String | ID for approval action notifications |
-
-### Deep Link Handler
-
-When a notification is tapped, `NotificationDeepLinkHandler.handle(payload)` runs and navigates to `payload.path`.
-
-To customise the behaviour, edit the `_navigate` method in `notification_deep_link_handler.dart`.
-
-### Approval Notifications
-
-When the user taps "Approve" / "Reject":
+`flutter_kit_firebase` does **not** import GoRouter or any auth package. Importing them would create a `firebase → navigation → auth → firebase` cycle. Instead, a static callback is set at app startup:
 
 ```dart
-// While the app is in the foreground
-NotificationManager.instance.onApprovalAction = (approvalId, isApproved) async {
-  if (isApproved) {
-    await myService.approve(approvalId);
-  } else {
-    await myService.reject(approvalId);
-  }
+// In main_*.dart, after GoRouter is created
+NotificationDeepLinkHandler.onNavigate = (path, params) {
+  getIt<GoRouter>().go(path, extra: params);
 };
 ```
 
 ---
 
-## RevenueCat
-
-In-app purchase and subscription management. Single instance: `RevenueCatManager.instance`.
-
-Update the `StoreProductIds` constants with your own product IDs:
-
-```
-lib/core/managers/revenuecat_manager/constants/store_product_ids.dart
-```
-
-### Initialisation
+## Theme — flutter_kit_ui
 
 ```dart
-// At app startup (inside Initialize.run or Injection)
-await RevenueCatManager.instance.init();
-
-// After the user logs in
-await RevenueCatManager.instance.logIn(userId);
-
-// After the user logs out
-await RevenueCatManager.instance.logOut();
-```
-
-### Loading Products
-
-```dart
-final offerings = await RevenueCatManager.instance.fetchOfferings();
-
-// Consumable packs
-final packs = RevenueCatManager.instance.buildCrystalPacks(offerings);
-
-// Subscription plans
-final plans = RevenueCatManager.instance.buildSubscriptionPlans(offerings);
-```
-
-### Purchasing
-
-```dart
-final result = await RevenueCatManager.instance.purchase(package);
-
-result.when(   // PurchaseResult sealed class
-  (success) => handleSuccess(success.productId),
-  (cancelled) => showMessage('Cancelled'),
-  (failure) => showError(failure.message),
-  (restore) => handleRestore(restore.hasPremium),
-);
-```
-
-### Checking Premium Entitlement
-
-```dart
-final isPremium = await RevenueCatManager.instance.hasPremiumEntitlement();
-```
-
----
-
-## Security — Jailbreak / Root Detection
-
-Uses a native platform channel to detect jailbroken (iOS) or rooted (Android) devices.
-
-```dart
-final isCompromised = await JailbreakDetector.isDeviceCompromised();
-```
-
-Checked automatically inside `Initialize.run()`. If the device is compromised, `JailbreakBlockApp` is displayed and the application becomes unusable.
-
-The channel must be implemented on the native side (`ios/Runner/JailbreakDetector.swift` and its Android equivalent). Update the `com.base.project/security` channel ID with your own bundle ID.
-
----
-
-## Theme
-
-```dart
-// Change theme mode
 context.read<ThemeCubit>().setLight();
 context.read<ThemeCubit>().setDark();
 context.read<ThemeCubit>().setSystem();
 
-// Using colours
 AppColors.primary
 AppColors.background
-AppColors.error
-
-// Using text styles
-AppTextTheme.titleLarge
-AppTextTheme.bodyMedium
+AppTheme.light
+AppTheme.dark
 ```
 
 Theme is managed by `ThemeCubit` and persisted to `SharedPreferences`.
@@ -768,57 +509,50 @@ Theme is managed by `ThemeCubit` and persisted to `SharedPreferences`.
 `slang_flutter` is used. Translation files:
 
 ```
-lib/core/localization/i18n/
+apps/mobile/lib/core/localization/i18n/
 ├── en.i18n.json
 └── tr.i18n.json
 ```
 
-**Usage:**
-
 ```dart
-// Inside a widget
 Text(context.t.someKey)
-
-// In Dart code
-final str = LocaleSettings.currentLocale.translations.someKey;
+LocaleSettings.setLocale(AppLocale.tr);
 ```
 
-**Adding a new key:**
+After adding a new key:
 
-1. Add the key to both `en.i18n.json` and `tr.i18n.json`
-2. Run `dart run slang` to regenerate
-
-**Changing language:**
-
-```dart
-LocaleSettings.setLocale(AppLocale.tr);
-LocaleSettings.setLocale(AppLocale.en);
+```bash
+dart run slang
 ```
 
 ---
 
-## Validator
-
-Fluent API for form validation:
+## Validator — flutter_kit_core
 
 ```dart
-// Field validator
-final validator = FieldValidator<String>()
-  .required()
-  .email()
-  .maxLength(100);
+final emailValidator = FieldValidator<String>([
+  Validators.required(),
+  Validators.email(),
+  Validators.maxLength(100),
+]);
 
-// Usage in a form widget
-TextFormField(
-  validator: validator.build(),
-)
+final error = emailValidator.validate(state.email); // first error or null
 
-// Multiple rules
-final passwordValidator = FieldValidator<String>()
-  .required()
-  .minLength(8)
-  .pattern(RegExp(r'[A-Z]'), message: 'At least one uppercase letter required')
-  .custom((value) => value != email ? null : 'Password cannot match email');
+final result = emailValidator.validateAll(state.email);
+result.isValid;  // bool
+result.errors;   // List<String>
+```
+
+`FormValidator` tracks multiple fields:
+
+```dart
+FormValidator get _form => FormValidator({
+  'email':    () => emailValidator.validate(state.email),
+  'password': () => passwordValidator.validate(state.password),
+});
+
+bool canSubmit = _form.isValid;
+String? emailError = _form.errorFor('email');
 ```
 
 **Available rules:** `required`, `email`, `minLength`, `maxLength`, `min`, `max`, `range`, `pattern`, `equals`, `custom`
@@ -827,14 +561,22 @@ final passwordValidator = FieldValidator<String>()
 
 ## Adding a New Feature
 
-### 1. Create the folder structure
+### 1. Generate the scaffold
+
+```bash
+dart run scripts/gen_feature.dart
+```
+
+The interactive script prompts for a feature name, asks whether it needs pagination, and generates all files (bloc, event, state, screen, navigator, use case stubs, repository interface + impl).
+
+### 2. Folder structure (generated)
 
 ```
-lib/features/my_feature/
+apps/mobile/lib/features/my_feature/
 ├── bloc/
+│   ├── my_feature_bloc.dart
 │   ├── my_feature_event.dart
-│   ├── my_feature_state.dart
-│   └── my_feature_bloc.dart
+│   └── my_feature_state.dart
 ├── data/
 │   ├── dto/
 │   ├── datasources/
@@ -844,81 +586,109 @@ lib/features/my_feature/
 │   ├── repositories/
 │   └── usecases/
 └── view/
-    ├── my_feature_screen.dart
-    └── widgets/
+    ├── my_feature_navigator.dart
+    └── my_feature_screen.dart
 ```
 
-### 2. Define the entity and repository
+### 3. Register with DI
 
 ```dart
-// domain/entities/my_item.dart
-class MyItem {
-  final String id;
-  final String title;
-  const MyItem({required this.id, required this.title});
-}
-
-// domain/repositories/my_repository.dart
-abstract class MyRepository {
-  Future<Result<List<MyItem>, ApiError>> getItems();
-}
-```
-
-### 3. Write the use case
-
-```dart
-class GetItemsUseCase {
-  final MyRepository repository;
-  const GetItemsUseCase(this.repository);
-  Future<Result<List<MyItem>, ApiError>> call() => repository.getItems();
-}
-```
-
-### 4. Register with DI
-
-```dart
-// Add to lib/core/di/injection.dart
+// In injection.dart
 getIt.registerLazySingleton<MyRepository>(
   () => MyRepositoryImpl(getIt<ApiManager>()),
 );
-getIt.registerLazySingleton<GetItemsUseCase>(
-  () => GetItemsUseCase(getIt<MyRepository>()),
-);
 ```
 
-### 5. Write the Bloc
+### 4. Register the route
 
 ```dart
-class MyBloc extends BaseBloc<MyEvent, MyState> {
-  final GetItemsUseCase _getItems = getIt<GetItemsUseCase>();
+// In AppNavigator (or equivalent router file)
+MyFeatureNavigator.route(),
+```
 
-  MyBloc() : super(const MyState()) {
-    on<MyFetched>(_onFetched);
-  }
+Navigation is always done through the navigator:
 
-  @override
-  void onReady() => add(const MyFetched());
+```dart
+MyFeatureNavigator.show(context);
+```
 
-  Future<void> _onFetched(MyFetched event, Emitter<MyState> emit) async {
-    emit(state.copyWith(isLoading: true));
-    final result = await _getItems();
-    result.when(
-      ok: (items) => emit(state.copyWith(isLoading: false, items: items)),
-      err: (e) => emit(state.copyWith(isLoading: false, errorMessage: e.message)),
+---
+
+## Testing
+
+Tests live alongside each package and the app:
+
+```
+apps/mobile/test/          # BLoC, use case, repository tests for the app
+packages/flutter_kit_auth/test/
+packages/flutter_kit_core/test/
+packages/flutter_kit_network/test/
+```
+
+### Run all tests
+
+```bash
+melos test
+```
+
+### Run a single package
+
+```bash
+cd packages/flutter_kit_auth
+flutter test
+```
+
+### Regenerate mocks
+
+```bash
+cd apps/mobile
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### Test pattern
+
+```dart
+@GenerateMocks([MyRepository])
+void main() {
+  late MockMyRepository mockRepo;
+  late MyBloc bloc;
+
+  setUp(() {
+    provideDummy<Result<MyEntity, ApiError>>(Ok(MyEntity()));
+    mockRepo = MockMyRepository();
+    bloc = MyBloc(mockRepo);
+  });
+
+  tearDown(() async => bloc.close());
+
+  test('emits loaded state on success', () async {
+    when(mockRepo.getItems()).thenAnswer((_) async => Ok([MyEntity()]));
+
+    bloc.add(const MyFetched());
+
+    await expectLater(
+      bloc.stream,
+      emitsInOrder([
+        isA<MyState>().having((s) => s.isLoading, 'loading', true),
+        isA<MyState>().having((s) => s.items.length, 'items', 1),
+      ]),
     );
-  }
+  });
 }
 ```
 
-### 6. Add the route
+Use `@GenerateNiceMocks([MockSpec<ConcreteClass>()])` for concrete classes (e.g., `FlutterSecureStorage`). Use `provideDummy<Result<T,E>>(Ok(...))` whenever a mock returns a generic `Result` type.
 
-```dart
-// Add to app_router.dart
-GoRoute(
-  path: '/my-feature',
-  parentNavigatorKey: rootKey,
-  builder: (context, state) => const MyScreen(),
-),
+---
+
+## Melos Commands
+
+```bash
+melos bootstrap       # Install dependencies (first setup or after pubspec changes)
+melos analyze         # Lint all packages
+melos test            # Run all tests
+melos format          # Format code
+melos format:check    # Format check (CI — does not write files)
 ```
 
 ---
@@ -934,12 +704,14 @@ GoRoute(
 | `firebase_core/messaging/analytics/crashlytics` | Firebase |
 | `flutter_local_notifications` | Local notifications |
 | `google_sign_in` + `sign_in_with_apple` | Social auth |
-| `purchases_flutter` | RevenueCat in-app purchases |
 | `flutter_secure_storage` | Encrypted token storage |
 | `shared_preferences` | Lightweight local storage |
+| `sqflite` | Local SQLite database |
 | `slang_flutter` | Localization |
 | `equatable` | Value equality |
 | `connectivity_plus` | Network status |
 | `app_links` | Deep linking |
 | `flutter_native_splash` | Native splash screen |
 | `flutter_screenutil` | Responsive sizing |
+| `cached_network_image` | Image caching |
+| `melos` | Monorepo management |
