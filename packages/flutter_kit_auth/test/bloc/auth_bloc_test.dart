@@ -20,9 +20,11 @@ void main() {
   late MockUpdateProfileUseCase mockUpdateProfile;
   late MockLogoutUseCase mockLogout;
   late MockRefreshUseCase mockRefresh;
-  late MockAppleSignInUseCase mockApple;
-  late MockGoogleSignInUseCase mockGoogle;
+  late MockSocialSignInUseCase mockSocial;
   late MockGuestSignInUseCase mockGuest;
+  late MockStartPasswordResetUseCase mockStartPasswordReset;
+  late MockVerifyPasswordResetUseCase mockVerifyPasswordReset;
+  late MockCompletePasswordResetUseCase mockCompletePasswordReset;
   late MockTokenStore mockTokenStore;
 
   final tokens = AuthTokens(accessToken: 'access', refreshToken: 'refresh');
@@ -40,9 +42,11 @@ void main() {
       updateProfileUseCase: mockUpdateProfile,
       logoutUseCase: mockLogout,
       refreshUseCase: mockRefresh,
-      appleSignInUseCase: mockApple,
-      googleSignInUseCase: mockGoogle,
+      socialSignInUseCase: mockSocial,
       guestSignInUseCase: mockGuest,
+      startPasswordResetUseCase: mockStartPasswordReset,
+      verifyPasswordResetUseCase: mockVerifyPasswordReset,
+      completePasswordResetUseCase: mockCompletePasswordReset,
       tokenStore: mockTokenStore,
     );
   }
@@ -54,9 +58,11 @@ void main() {
     mockUpdateProfile = MockUpdateProfileUseCase();
     mockLogout = MockLogoutUseCase();
     mockRefresh = MockRefreshUseCase();
-    mockApple = MockAppleSignInUseCase();
-    mockGoogle = MockGoogleSignInUseCase();
+    mockSocial = MockSocialSignInUseCase();
     mockGuest = MockGuestSignInUseCase();
+    mockStartPasswordReset = MockStartPasswordResetUseCase();
+    mockVerifyPasswordReset = MockVerifyPasswordResetUseCase();
+    mockCompletePasswordReset = MockCompletePasswordResetUseCase();
     mockTokenStore = MockTokenStore();
 
     provideDummy<Result<AuthTokens, ApiError>>(
@@ -98,9 +104,7 @@ void main() {
       final auth = await buildManager();
       final bloc = AuthBloc(auth);
 
-      when(
-        mockLogin(email: 'a@b.com', password: 'pass'),
-      ).thenAnswer((_) async => Ok(tokens));
+      when(mockLogin(any)).thenAnswer((_) async => Ok(tokens));
       when(mockMe()).thenAnswer((_) async => Ok(profile));
       when(mockTokenStore.write(tokens)).thenAnswer((_) async {});
 

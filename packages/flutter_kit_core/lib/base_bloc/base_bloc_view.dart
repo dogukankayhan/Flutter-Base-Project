@@ -10,8 +10,8 @@ import 'base_state.dart';
 /// - Manages Bloc/Cubit lifecycle (onInit, onReady, close)
 /// - Distinguishes multiple screens of the same type using active key
 /// - provides onInit, onReady, onDispose callbacks
-/// - GetIt ile bloc/cubit'leri publish/unpublish eder
-/// - Hem BaseBloc hem BaseCubit destekler
+/// - Publishes/unpublishes blocs/cubits with GetIt
+/// - Supports both BaseBloc and BaseCubit
 ///
 final class BaseBlocView<C extends LifecycleBloc, S extends BaseState>
     extends StatefulWidget {
@@ -26,7 +26,7 @@ final class BaseBlocView<C extends LifecycleBloc, S extends BaseState>
   /// E.g. storyId for StoryDetail, conversationId for Chat...
   final String? activeKey;
 
-  /// Bloc/Cubit lifecycle callback'leri
+  /// Bloc/Cubit lifecycle callbacks
   final Function(C)? onInit;
   final Function(C)? onReady;
   final Function(C)? onDispose;
@@ -74,7 +74,7 @@ final class _BaseBlocViewState<C extends LifecycleBloc, S extends BaseState>
     bloc.onInit();
     widget.onInit?.call(bloc);
 
-    // 4) onReady: bloc.onReady() + view callback birlikte tetiklenir.
+    // 4) onReady: bloc.onReady() + view callback are triggered together.
     // BaseBlocView handles central lifecycle control here.
     final usePostFrame = widget.usePostFrame ?? true;
     if (usePostFrame) {
@@ -100,7 +100,7 @@ final class _BaseBlocViewState<C extends LifecycleBloc, S extends BaseState>
 
     WidgetsBinding.instance.removeObserver(this);
 
-    // Bloc/Cubit'i kapat
+    // Close the Bloc/Cubit
     bloc.close();
     super.dispose();
   }

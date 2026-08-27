@@ -6,27 +6,29 @@
 import 'dart:async' as _i4;
 
 import 'package:flutter_kit_auth/auth/domain/entity/auth_entity.dart' as _i6;
+import 'package:flutter_kit_auth/auth/domain/entity/password_reset_entity.dart'
+    as _i18;
 import 'package:flutter_kit_auth/auth/domain/entity/profile_entity.dart'
     as _i11;
 import 'package:flutter_kit_auth/auth/domain/repository/auth_repository.dart'
     as _i2;
-import 'package:flutter_kit_auth/auth/domain/usecase/apple_sign_in_usecase.dart'
-    as _i15;
-import 'package:flutter_kit_auth/auth/domain/usecase/google_sign_in_usecase.dart'
-    as _i16;
 import 'package:flutter_kit_auth/auth/domain/usecase/guest_sign_in_usecase.dart'
-    as _i17;
+    as _i16;
 import 'package:flutter_kit_auth/auth/domain/usecase/login_usecase.dart' as _i3;
 import 'package:flutter_kit_auth/auth/domain/usecase/logout_usecase.dart'
     as _i13;
 import 'package:flutter_kit_auth/auth/domain/usecase/me_usecase.dart' as _i10;
+import 'package:flutter_kit_auth/auth/domain/usecase/password_reset_usecase.dart'
+    as _i17;
 import 'package:flutter_kit_auth/auth/domain/usecase/refresh_usecase.dart'
     as _i14;
 import 'package:flutter_kit_auth/auth/domain/usecase/register_usecase.dart'
     as _i9;
+import 'package:flutter_kit_auth/auth/domain/usecase/social_sign_in_usecase.dart'
+    as _i15;
 import 'package:flutter_kit_auth/auth/domain/usecase/update_profile_usecase.dart'
     as _i12;
-import 'package:flutter_kit_auth/auth/token/token_store.dart' as _i18;
+import 'package:flutter_kit_auth/auth/token/token_store.dart' as _i19;
 import 'package:flutter_kit_network/core/network/error/api_error.dart' as _i7;
 import 'package:flutter_kit_network/core/utils/result.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
@@ -73,20 +75,16 @@ class MockLoginUseCase extends _i1.Mock implements _i3.LoginUseCase {
           as _i2.AuthRepository);
 
   @override
-  _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>> call({
-    required String? email,
-    required String? password,
-  }) =>
+  _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>> call(
+    _i6.LoginRequest? request,
+  ) =>
       (super.noSuchMethod(
-            Invocation.method(#call, [], {#email: email, #password: password}),
+            Invocation.method(#call, [request]),
             returnValue:
                 _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>>.value(
                   _i8.dummyValue<_i5.Result<_i6.AuthTokens, _i7.ApiError>>(
                     this,
-                    Invocation.method(#call, [], {
-                      #email: email,
-                      #password: password,
-                    }),
+                    Invocation.method(#call, [request]),
                   ),
                 ),
           )
@@ -113,29 +111,16 @@ class MockRegisterUseCase extends _i1.Mock implements _i9.RegisterUseCase {
           as _i2.AuthRepository);
 
   @override
-  _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>> call({
-    required String? email,
-    required String? password,
-    String? firstName,
-    String? lastName,
-  }) =>
+  _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>> call(
+    _i6.RegisterRequest? request,
+  ) =>
       (super.noSuchMethod(
-            Invocation.method(#call, [], {
-              #email: email,
-              #password: password,
-              #firstName: firstName,
-              #lastName: lastName,
-            }),
+            Invocation.method(#call, [request]),
             returnValue:
                 _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>>.value(
                   _i8.dummyValue<_i5.Result<_i6.AuthTokens, _i7.ApiError>>(
                     this,
-                    Invocation.method(#call, [], {
-                      #email: email,
-                      #password: password,
-                      #firstName: firstName,
-                      #lastName: lastName,
-                    }),
+                    Invocation.method(#call, [request]),
                   ),
                 ),
           )
@@ -282,12 +267,12 @@ class MockRefreshUseCase extends _i1.Mock implements _i14.RefreshUseCase {
           as _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>>);
 }
 
-/// A class which mocks [AppleSignInUseCase].
+/// A class which mocks [SocialSignInUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAppleSignInUseCase extends _i1.Mock
-    implements _i15.AppleSignInUseCase {
-  MockAppleSignInUseCase() {
+class MockSocialSignInUseCase extends _i1.Mock
+    implements _i15.SocialSignInUseCase {
+  MockSocialSignInUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
@@ -303,53 +288,16 @@ class MockAppleSignInUseCase extends _i1.Mock
           as _i2.AuthRepository);
 
   @override
-  _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>> call({
-    required String? idToken,
-  }) =>
+  _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>> call(
+    _i6.SocialSignInRequest? request,
+  ) =>
       (super.noSuchMethod(
-            Invocation.method(#call, [], {#idToken: idToken}),
+            Invocation.method(#call, [request]),
             returnValue:
                 _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>>.value(
                   _i8.dummyValue<_i5.Result<_i6.AuthTokens, _i7.ApiError>>(
                     this,
-                    Invocation.method(#call, [], {#idToken: idToken}),
-                  ),
-                ),
-          )
-          as _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>>);
-}
-
-/// A class which mocks [GoogleSignInUseCase].
-///
-/// See the documentation for Mockito's code generation for more information.
-class MockGoogleSignInUseCase extends _i1.Mock
-    implements _i16.GoogleSignInUseCase {
-  MockGoogleSignInUseCase() {
-    _i1.throwOnMissingStub(this);
-  }
-
-  @override
-  _i2.AuthRepository get repository =>
-      (super.noSuchMethod(
-            Invocation.getter(#repository),
-            returnValue: _FakeAuthRepository_0(
-              this,
-              Invocation.getter(#repository),
-            ),
-          )
-          as _i2.AuthRepository);
-
-  @override
-  _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>> call({
-    required String? idToken,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#call, [], {#idToken: idToken}),
-            returnValue:
-                _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>>.value(
-                  _i8.dummyValue<_i5.Result<_i6.AuthTokens, _i7.ApiError>>(
-                    this,
-                    Invocation.method(#call, [], {#idToken: idToken}),
+                    Invocation.method(#call, [request]),
                   ),
                 ),
           )
@@ -360,7 +308,7 @@ class MockGoogleSignInUseCase extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockGuestSignInUseCase extends _i1.Mock
-    implements _i17.GuestSignInUseCase {
+    implements _i16.GuestSignInUseCase {
   MockGuestSignInUseCase() {
     _i1.throwOnMissingStub(this);
   }
@@ -391,10 +339,118 @@ class MockGuestSignInUseCase extends _i1.Mock
           as _i4.Future<_i5.Result<_i6.AuthTokens, _i7.ApiError>>);
 }
 
+/// A class which mocks [StartPasswordResetUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockStartPasswordResetUseCase extends _i1.Mock
+    implements _i17.StartPasswordResetUseCase {
+  MockStartPasswordResetUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i2.AuthRepository get repository =>
+      (super.noSuchMethod(
+            Invocation.getter(#repository),
+            returnValue: _FakeAuthRepository_0(
+              this,
+              Invocation.getter(#repository),
+            ),
+          )
+          as _i2.AuthRepository);
+
+  @override
+  _i4.Future<_i5.Result<void, _i7.ApiError>> call(
+    _i18.PasswordResetStartRequest? request,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#call, [request]),
+            returnValue: _i4.Future<_i5.Result<void, _i7.ApiError>>.value(
+              _i8.dummyValue<_i5.Result<void, _i7.ApiError>>(
+                this,
+                Invocation.method(#call, [request]),
+              ),
+            ),
+          )
+          as _i4.Future<_i5.Result<void, _i7.ApiError>>);
+}
+
+/// A class which mocks [VerifyPasswordResetUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockVerifyPasswordResetUseCase extends _i1.Mock
+    implements _i17.VerifyPasswordResetUseCase {
+  MockVerifyPasswordResetUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i2.AuthRepository get repository =>
+      (super.noSuchMethod(
+            Invocation.getter(#repository),
+            returnValue: _FakeAuthRepository_0(
+              this,
+              Invocation.getter(#repository),
+            ),
+          )
+          as _i2.AuthRepository);
+
+  @override
+  _i4.Future<_i5.Result<void, _i7.ApiError>> call(
+    _i18.PasswordResetVerifyRequest? request,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#call, [request]),
+            returnValue: _i4.Future<_i5.Result<void, _i7.ApiError>>.value(
+              _i8.dummyValue<_i5.Result<void, _i7.ApiError>>(
+                this,
+                Invocation.method(#call, [request]),
+              ),
+            ),
+          )
+          as _i4.Future<_i5.Result<void, _i7.ApiError>>);
+}
+
+/// A class which mocks [CompletePasswordResetUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockCompletePasswordResetUseCase extends _i1.Mock
+    implements _i17.CompletePasswordResetUseCase {
+  MockCompletePasswordResetUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i2.AuthRepository get repository =>
+      (super.noSuchMethod(
+            Invocation.getter(#repository),
+            returnValue: _FakeAuthRepository_0(
+              this,
+              Invocation.getter(#repository),
+            ),
+          )
+          as _i2.AuthRepository);
+
+  @override
+  _i4.Future<_i5.Result<void, _i7.ApiError>> call(
+    _i18.PasswordResetCompleteRequest? request,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#call, [request]),
+            returnValue: _i4.Future<_i5.Result<void, _i7.ApiError>>.value(
+              _i8.dummyValue<_i5.Result<void, _i7.ApiError>>(
+                this,
+                Invocation.method(#call, [request]),
+              ),
+            ),
+          )
+          as _i4.Future<_i5.Result<void, _i7.ApiError>>);
+}
+
 /// A class which mocks [TokenStore].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockTokenStore extends _i1.Mock implements _i18.TokenStore {
+class MockTokenStore extends _i1.Mock implements _i19.TokenStore {
   MockTokenStore() {
     _i1.throwOnMissingStub(this);
   }

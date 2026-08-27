@@ -170,7 +170,7 @@ Module registration order is **mandatory**:
 
 ```
 1. setupNetworkModule   → FlutterSecureStorage, TokenStore, ApiManager
-2. setupAuthModule      → AuthRemoteDataSource, AuthRepository, AuthManager, AuthBloc
+2. setupAuthModule      → AuthRepository, AuthManager, AuthBloc
                           (requires ApiManager and TokenStore)
 3. setupNavigationModule → GoRouter, AppNavigator
                            (requires AuthBloc)
@@ -195,18 +195,23 @@ Built on `DioClient`. All requests go through the `ApiManager` interface.
 | Interceptor | Responsibility |
 |---|---|
 | `AuthInterceptor` | Attaches `Authorization: Bearer <token>` to every request |
-| `RefreshTokenInterceptor` | Refreshes the token on 401 and retries the request |
+| `RefreshTokenInterceptor` | Refreshes the token on 401 and retries the request; falls back to the original error after a 30s timeout if the wait never resolves |
 | `ConnectivityInterceptor` | Throws an error when there is no internet |
-| `RetryInterceptor` | Retries up to 3x on network errors |
-| `CacheInterceptor` | Caches GET responses |
+| `RetryInterceptor` | Retries up to 3x on network errors; waits for connectivity to return, capped at 15s |
+| `CacheInterceptor` | Caches GET responses — **disabled by default** (`ApiConfig.enableCache`); the cache has no invalidation contract of its own, so opt in per-app and call `ApiManager.invalidateCache(path)` after a mutating request |
 | `RateLimiterInterceptor` | Flood protection per endpoint |
+| `CertificatePinningInterceptor` | Validates server certificate SHA-256 fingerprint (pass primary + backup) |
 | `LoggingInterceptor` | Logs requests/responses in non-prod environments |
+
+`AnalyticsManager` (pluggable request-lifecycle telemetry — start/success/failure/error + custom events) sits alongside the interceptor chain rather than inside it; `ConsoleAnalyticsProvider` is wired in dev builds by default. `ApiManager.getBytes()` fetches raw bytes (e.g. an authenticated image) instead of parsing JSON.
 
 ### Token Flow
 
 `AuthInterceptor` → `TokenStore.readAccess()` → `Authorization: Bearer <token>`
 
-On 401 → `RefreshTokenInterceptor` → `/auth/refresh` (bare Dio, no circular dependency) → token saved → request retried
+On 401 → `RefreshTokenInterceptor` → `/auth/refresh` → token saved → request retried.
+
+The refresh call itself goes through a **second, interceptor-free `ApiManager`** (registered as `getIt<ApiManager>(instanceName: 'refreshApiManager')`), never the main one — routing it back through the same `RefreshTokenInterceptor` would re-enter its lock and hang if the refresh token is itself invalid.
 
 ### Result Pattern
 
@@ -248,12 +253,20 @@ auth.tokens        // AuthTokens?
 await auth.login(email, password);
 await auth.register(email: email, password: password);
 await auth.logout();
-await auth.signInWithApple(idToken);
-await auth.signInWithGoogle(idToken);
+await auth.signInWithSocial(SocialAuthProvider.apple, idToken);
+await auth.signInWithSocial(SocialAuthProvider.google, idToken);
 await auth.signInAsGuest();
 await auth.fetchMe();
 await auth.updateProfile({'firstName': 'Ali'});
+
+// Generic password-reset skeleton (see CLAUDE.md Rule 3) — extend with
+// your own fields rather than using as-is:
+await auth.startPasswordReset(email);
+await auth.verifyPasswordReset(email: email, code: code);
+await auth.completePasswordReset(email: email, code: code, newPassword: newPassword);
 ```
+
+`SocialAuthService` (in `flutter_kit_auth`) wraps `google_sign_in`/`sign_in_with_apple` and returns a platform-agnostic `SocialCredential` — pass its `idToken` straight into `signInWithSocial`. It's only registered in GetIt when `setupAuth(googleServerClientId: ...)` is given a client ID.
 
 All methods return `Result<T, ApiError>`:
 
@@ -474,8 +487,8 @@ context.read<ThemeCubit>().setLight();
 context.read<ThemeCubit>().setDark();
 context.read<ThemeCubit>().setSystem();
 
-AppColors.primary
-AppColors.background
+context.appColors.background   // AppColors is a ThemeExtension — read via context, not statically
+context.appColors.textColor
 AppTheme.light
 AppTheme.dark
 ```
@@ -495,15 +508,17 @@ apps/mobile/lib/core/localization/i18n/
 ```
 
 ```dart
-Text(context.t.someKey)
+Text(context.translations.someKey)
 LocaleSettings.setLocale(AppLocale.tr);
 ```
 
-After adding a new key:
+After adding a new key, regenerate from the workspace root:
 
 ```bash
-dart run slang
+melos run gen:i18n
 ```
+
+The generated output (`strings*.g.dart`) is **not tracked in git** — its header carries a build timestamp, so every merge conflicted on it. A fresh checkout does not compile until this has run once; edit the `.i18n.json` files, never the `.g.dart` output.
 
 ---
 
@@ -535,7 +550,22 @@ bool canSubmit = _form.isValid;
 String? emailError = _form.errorFor('email');
 ```
 
-**Available rules:** `required`, `email`, `minLength`, `maxLength`, `min`, `max`, `range`, `pattern`, `equals`, `custom`
+**Available rules:** `required`, `email`, `minLength`, `maxLength`, `min`, `max`, `range`, `pattern`, `equals`, `custom`, `phone`, `iban`, `date`, `url`
+
+---
+
+## Phone Numbers — flutter_kit_core
+
+`CountryPhones` (in `flutter_kit_core/utils/phone/`) holds dial code, national-number mask and mobile-prefix data for 231 countries, defaulting to Türkiye:
+
+```dart
+final country = CountryPhones.defaultCountry;   // Türkiye
+CountryPhones.byIso('US');
+CountryPhones.parse('+905551234567');           // (CountryPhone, nationalDigits) or null
+country.toE164('5551234567');                   // '+905551234567'
+```
+
+`MaskedPhoneInputFormatter(pattern:, trunkPrefix:)` formats a field as the user types, and `Validators.phone(country:)` validates against the same country's digit count and mobile prefixes. This app's `AppTextField` does not yet wire a country-code prefix/picker on top of this — the data and formatter are available for a screen that needs one.
 
 ---
 
@@ -665,6 +695,7 @@ Use `@GenerateNiceMocks([MockSpec<ConcreteClass>()])` for concrete classes (e.g.
 
 ```bash
 melos bootstrap       # Install dependencies (first setup or after pubspec changes)
+melos run gen:i18n    # Generate strings*.g.dart (REQUIRED after a fresh checkout)
 melos analyze         # Lint all packages
 melos test            # Run all tests
 melos format          # Format code

@@ -55,7 +55,14 @@ class RefreshTokenInterceptor extends Interceptor {
     if (_isRefreshing) {
       final completer = Completer<String?>();
       _waiters.add(completer);
-      return completer.future;
+      // Backstop: the only thing that ever completes a waiter is the
+      // in-flight refresh's `finally` block. If that refresh call somehow
+      // never resolves (e.g. it re-enters this same lock), fall back to
+      // propagating the original error instead of hanging forever.
+      return completer.future.timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => null,
+      );
     }
 
     _isRefreshing = true;

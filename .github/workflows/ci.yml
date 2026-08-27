@@ -26,6 +26,9 @@ jobs:
       - name: Bootstrap workspace
         run: melos bootstrap
 
+      - name: Generate i18n strings
+        run: melos run gen:i18n
+
       - name: Check formatting
         run: melos run format:check
 

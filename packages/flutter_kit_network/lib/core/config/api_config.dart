@@ -43,7 +43,16 @@ class ApiConfig {
       retryBaseDelay: config.retryBaseDelay ?? const Duration(seconds: 1),
       enableLogging: config.enableLogging,
       logLevel: config.logLevel,
-      enableCache: true,
+      // Off, for every endpoint. [CacheInterceptor] answers a GET from memory
+      // for five minutes and knows nothing about writes, so any save was
+      // invisible to the next read until the process restarted — and a cache
+      // hit is resolved with `callFollowingResponseInterceptor: true`, so it
+      // reaches the logger and the request inspector looking exactly like a
+      // fresh response from the server. Correctness first: nothing in the app
+      // is slow enough to be worth reads that can silently be stale, and
+      // turning it back on means giving it an invalidation contract first —
+      // see [ApiManager.invalidateCache].
+      enableCache: false,
       enableRateLimiter: true,
     );
   }

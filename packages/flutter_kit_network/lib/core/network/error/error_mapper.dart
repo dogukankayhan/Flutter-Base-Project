@@ -14,6 +14,9 @@ class ErrorMapper {
 
     // Try to parse server error body
     final data = e.response?.data;
+    final hasServerMessage =
+        data is Map<String, dynamic> &&
+        (data['message']?.toString().isNotEmpty ?? false);
     if (data is Map<String, dynamic>) {
       message = data['message']?.toString() ?? message;
       code = data['code']?.toString();
@@ -30,6 +33,7 @@ class ErrorMapper {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
+      case DioExceptionType.transformTimeout:
         message = messages.connectionTimeout;
         code = 'TIMEOUT';
         break;
@@ -40,7 +44,7 @@ class ErrorMapper {
         break;
 
       case DioExceptionType.badResponse:
-        if (status != null) {
+        if (status != null && !hasServerMessage) {
           message = _getLocalizedMessageForStatus(status, messages) ?? message;
         }
         break;
@@ -64,7 +68,20 @@ class ErrorMapper {
       code: code,
       key: key,
       raw: e.response?.data,
+      retryAfter: _retryAfter(e.response),
     );
+  }
+
+  /// `Retry-After` in its delay-seconds form. The HTTP-date form is allowed by
+  /// the spec but needs a trusted clock to be worth anything, and a rate limit
+  /// answered against a skewed device clock would wait for the wrong length —
+  /// better to report nothing and let the caller pick its own backoff.
+  static Duration? _retryAfter(Response<dynamic>? response) {
+    final raw = response?.headers.value('retry-after')?.trim();
+    if (raw == null || raw.isEmpty) return null;
+    final seconds = int.tryParse(raw);
+    if (seconds == null || seconds < 0) return null;
+    return Duration(seconds: seconds);
   }
 
   /// Get localized message for HTTP status code

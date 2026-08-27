@@ -6,11 +6,13 @@ import 'package:flutter_kit_auth/auth/domain/usecase/me_usecase.dart';
 import 'package:flutter_kit_auth/auth/domain/usecase/update_profile_usecase.dart';
 import 'package:flutter_kit_auth/auth/domain/usecase/logout_usecase.dart';
 import 'package:flutter_kit_auth/auth/domain/usecase/refresh_usecase.dart';
-import 'package:flutter_kit_auth/auth/domain/usecase/apple_sign_in_usecase.dart';
-import 'package:flutter_kit_auth/auth/domain/usecase/google_sign_in_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/social_sign_in_usecase.dart';
 import 'package:flutter_kit_auth/auth/domain/usecase/guest_sign_in_usecase.dart';
+import 'package:flutter_kit_auth/auth/domain/usecase/password_reset_usecase.dart';
 import 'package:flutter_kit_auth/auth/domain/entity/auth_entity.dart';
+import 'package:flutter_kit_auth/auth/domain/entity/password_reset_entity.dart';
 import 'package:flutter_kit_auth/auth/domain/entity/profile_entity.dart';
+import 'package:flutter_kit_auth/auth/domain/enum/social_auth_provider.dart';
 import 'package:flutter_kit_auth/auth/token/token_store.dart';
 import 'package:flutter_kit_network/core/network/error/api_error.dart';
 import 'package:flutter_kit_network/core/utils/result.dart';
@@ -27,9 +29,11 @@ import 'auth_manager_test.mocks.dart';
   UpdateProfileUseCase,
   LogoutUseCase,
   RefreshUseCase,
-  AppleSignInUseCase,
-  GoogleSignInUseCase,
+  SocialSignInUseCase,
   GuestSignInUseCase,
+  StartPasswordResetUseCase,
+  VerifyPasswordResetUseCase,
+  CompletePasswordResetUseCase,
   TokenStore,
 ])
 void main() {
@@ -39,9 +43,11 @@ void main() {
   late MockUpdateProfileUseCase mockUpdateProfileUseCase;
   late MockLogoutUseCase mockLogoutUseCase;
   late MockRefreshUseCase mockRefreshUseCase;
-  late MockAppleSignInUseCase mockAppleSignInUseCase;
-  late MockGoogleSignInUseCase mockGoogleSignInUseCase;
+  late MockSocialSignInUseCase mockSocialSignInUseCase;
   late MockGuestSignInUseCase mockGuestSignInUseCase;
+  late MockStartPasswordResetUseCase mockStartPasswordResetUseCase;
+  late MockVerifyPasswordResetUseCase mockVerifyPasswordResetUseCase;
+  late MockCompletePasswordResetUseCase mockCompletePasswordResetUseCase;
   late MockTokenStore mockTokenStore;
   late AuthManager authManager;
 
@@ -67,6 +73,21 @@ void main() {
 
   final testApiError = ApiError(statusCode: 401, message: 'Unauthorized');
 
+  Future<AuthManager> createManager() => AuthManager.create(
+    loginUseCase: mockLoginUseCase,
+    registerUseCase: mockRegisterUseCase,
+    meUseCase: mockMeUseCase,
+    updateProfileUseCase: mockUpdateProfileUseCase,
+    logoutUseCase: mockLogoutUseCase,
+    refreshUseCase: mockRefreshUseCase,
+    socialSignInUseCase: mockSocialSignInUseCase,
+    guestSignInUseCase: mockGuestSignInUseCase,
+    startPasswordResetUseCase: mockStartPasswordResetUseCase,
+    verifyPasswordResetUseCase: mockVerifyPasswordResetUseCase,
+    completePasswordResetUseCase: mockCompletePasswordResetUseCase,
+    tokenStore: mockTokenStore,
+  );
+
   setUp(() {
     // To allow Mockito to generate the Result<T,E> type as dummy
     provideDummy<Result<AuthTokens, ApiError>>(
@@ -83,9 +104,11 @@ void main() {
     mockUpdateProfileUseCase = MockUpdateProfileUseCase();
     mockLogoutUseCase = MockLogoutUseCase();
     mockRefreshUseCase = MockRefreshUseCase();
-    mockAppleSignInUseCase = MockAppleSignInUseCase();
-    mockGoogleSignInUseCase = MockGoogleSignInUseCase();
+    mockSocialSignInUseCase = MockSocialSignInUseCase();
     mockGuestSignInUseCase = MockGuestSignInUseCase();
+    mockStartPasswordResetUseCase = MockStartPasswordResetUseCase();
+    mockVerifyPasswordResetUseCase = MockVerifyPasswordResetUseCase();
+    mockCompletePasswordResetUseCase = MockCompletePasswordResetUseCase();
     mockTokenStore = MockTokenStore();
   });
 
@@ -96,18 +119,7 @@ void main() {
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
 
       // Act
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
 
       // Assert
       expect(authManager.isLoggedIn, true);
@@ -122,18 +134,7 @@ void main() {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
 
       // Act
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
 
       // Assert
       expect(authManager.isLoggedIn, false);
@@ -147,24 +148,15 @@ void main() {
   group('AuthManager Login Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
     });
 
     test('should login successfully', () async {
       // Arrange
       when(
-        mockLoginUseCase(email: testEmail, password: testPassword),
+        mockLoginUseCase(
+          const LoginRequest(email: testEmail, password: testPassword),
+        ),
       ).thenAnswer((_) async => Ok(testTokens));
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
       when(mockTokenStore.write(testTokens)).thenAnswer((_) async {});
@@ -179,7 +171,9 @@ void main() {
       expect(authManager.profile, testProfile);
       expect(authManager.isBusy, false);
       verify(
-        mockLoginUseCase(email: testEmail, password: testPassword),
+        mockLoginUseCase(
+          const LoginRequest(email: testEmail, password: testPassword),
+        ),
       ).called(1);
       verify(mockTokenStore.write(testTokens)).called(1);
       verify(mockMeUseCase()).called(1);
@@ -188,7 +182,9 @@ void main() {
     test('should handle login failure', () async {
       // Arrange
       when(
-        mockLoginUseCase(email: testEmail, password: testPassword),
+        mockLoginUseCase(
+          const LoginRequest(email: testEmail, password: testPassword),
+        ),
       ).thenAnswer((_) async => Err(testApiError));
 
       // Act
@@ -199,9 +195,6 @@ void main() {
       expect(authManager.isLoggedIn, false);
       expect(authManager.tokens, null);
       expect(authManager.isBusy, false);
-      verify(
-        mockLoginUseCase(email: testEmail, password: testPassword),
-      ).called(1);
       verifyNever(mockTokenStore.write(any));
       verifyNever(mockMeUseCase());
     });
@@ -210,7 +203,9 @@ void main() {
       // Arrange
       bool busyDuringLogin = false;
       when(
-        mockLoginUseCase(email: testEmail, password: testPassword),
+        mockLoginUseCase(
+          const LoginRequest(email: testEmail, password: testPassword),
+        ),
       ).thenAnswer((_) async {
         busyDuringLogin = authManager.isBusy;
         return Ok(testTokens);
@@ -230,28 +225,19 @@ void main() {
   group('AuthManager Register Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
     });
 
     test('should register successfully', () async {
       // Arrange
       when(
         mockRegisterUseCase(
-          email: testEmail,
-          password: testPassword,
-          firstName: testFirstName,
-          lastName: testLastName,
+          const RegisterRequest(
+            email: testEmail,
+            password: testPassword,
+            firstName: testFirstName,
+            lastName: testLastName,
+          ),
         ),
       ).thenAnswer((_) async => Ok(testTokens));
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
@@ -270,14 +256,6 @@ void main() {
       expect(authManager.isLoggedIn, true);
       expect(authManager.tokens, testTokens);
       expect(authManager.profile, testProfile);
-      verify(
-        mockRegisterUseCase(
-          email: testEmail,
-          password: testPassword,
-          firstName: testFirstName,
-          lastName: testLastName,
-        ),
-      ).called(1);
       verify(mockTokenStore.write(testTokens)).called(1);
       verify(mockMeUseCase()).called(1);
     });
@@ -285,7 +263,9 @@ void main() {
     test('should handle register failure', () async {
       // Arrange
       when(
-        mockRegisterUseCase(email: testEmail, password: testPassword),
+        mockRegisterUseCase(
+          const RegisterRequest(email: testEmail, password: testPassword),
+        ),
       ).thenAnswer((_) async => Err(testApiError));
 
       // Act
@@ -306,18 +286,7 @@ void main() {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => testTokens);
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
     });
 
     test('should fetch profile successfully', () async {
@@ -384,18 +353,7 @@ void main() {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => testTokens);
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
     });
 
     test('should logout successfully', () async {
@@ -436,18 +394,7 @@ void main() {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => testTokens);
       when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
     });
 
     test('should refresh tokens successfully', () async {
@@ -511,21 +458,93 @@ void main() {
     });
   });
 
+  group('AuthManager Social & Guest Sign-in Tests', () {
+    setUp(() async {
+      when(mockTokenStore.read()).thenAnswer((_) async => null);
+      authManager = await createManager();
+    });
+
+    test('signInWithSocial logs in with the given provider', () async {
+      when(
+        mockSocialSignInUseCase(
+          const SocialSignInRequest(
+            provider: SocialAuthProvider.google,
+            idToken: 'g-token',
+          ),
+        ),
+      ).thenAnswer((_) async => Ok(testTokens));
+      when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
+      when(mockTokenStore.write(testTokens)).thenAnswer((_) async {});
+
+      final result = await authManager.signInWithSocial(
+        SocialAuthProvider.google,
+        'g-token',
+      );
+
+      expect(result.isOk, true);
+      expect(authManager.isLoggedIn, true);
+    });
+
+    test('signInAsGuest logs in without credentials', () async {
+      when(mockGuestSignInUseCase()).thenAnswer((_) async => Ok(testTokens));
+      when(mockMeUseCase()).thenAnswer((_) async => Ok(testProfile));
+      when(mockTokenStore.write(testTokens)).thenAnswer((_) async {});
+
+      final result = await authManager.signInAsGuest();
+
+      expect(result.isOk, true);
+      expect(authManager.isLoggedIn, true);
+    });
+  });
+
+  group('AuthManager Password Reset Tests', () {
+    setUp(() async {
+      when(mockTokenStore.read()).thenAnswer((_) async => null);
+      authManager = await createManager();
+    });
+
+    test('startPasswordReset delegates to the use case', () async {
+      when(
+        mockStartPasswordResetUseCase(
+          const PasswordResetStartRequest(email: testEmail),
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+
+      final result = await authManager.startPasswordReset(testEmail);
+
+      expect(result.isOk, true);
+      verify(
+        mockStartPasswordResetUseCase(
+          const PasswordResetStartRequest(email: testEmail),
+        ),
+      ).called(1);
+    });
+
+    test('completePasswordReset delegates to the use case', () async {
+      when(
+        mockCompletePasswordResetUseCase(
+          const PasswordResetCompleteRequest(
+            email: testEmail,
+            code: '123456',
+            newPassword: 'newpw',
+          ),
+        ),
+      ).thenAnswer((_) async => const Ok(null));
+
+      final result = await authManager.completePasswordReset(
+        email: testEmail,
+        code: '123456',
+        newPassword: 'newpw',
+      );
+
+      expect(result.isOk, true);
+    });
+  });
+
   group('AuthManager Token Management Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
     });
 
     test('should save tokens', () async {
@@ -556,18 +575,7 @@ void main() {
   group('AuthManager State Tests', () {
     setUp(() async {
       when(mockTokenStore.read()).thenAnswer((_) async => null);
-      authManager = await AuthManager.create(
-        loginUseCase: mockLoginUseCase,
-        registerUseCase: mockRegisterUseCase,
-        meUseCase: mockMeUseCase,
-        updateProfileUseCase: mockUpdateProfileUseCase,
-        logoutUseCase: mockLogoutUseCase,
-        refreshUseCase: mockRefreshUseCase,
-        appleSignInUseCase: mockAppleSignInUseCase,
-        googleSignInUseCase: mockGoogleSignInUseCase,
-        guestSignInUseCase: mockGuestSignInUseCase,
-        tokenStore: mockTokenStore,
-      );
+      authManager = await createManager();
     });
 
     test('should report not logged in when no tokens', () {

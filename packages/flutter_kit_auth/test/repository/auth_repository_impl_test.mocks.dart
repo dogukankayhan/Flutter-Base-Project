@@ -3,16 +3,16 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i3;
+import 'dart:async' as _i4;
 
-import 'package:dio/dio.dart' as _i7;
-import 'package:flutter_kit_auth/auth/data/dto/auth_dto.dart' as _i5;
-import 'package:flutter_kit_auth/auth/data/remote/auth_remote_datasource.dart'
-    as _i2;
-import 'package:flutter_kit_network/core/network/error/api_error.dart' as _i6;
-import 'package:flutter_kit_network/core/utils/result.dart' as _i4;
+import 'package:dio/dio.dart' as _i5;
+import 'package:flutter_kit_network/core/network/api/api_manager_interface.dart'
+    as _i3;
+import 'package:flutter_kit_network/core/network/api/api_response.dart' as _i2;
+import 'package:flutter_kit_network/core/network/serializer/serializer_interface.dart'
+    as _i6;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i8;
+import 'package:mockito/src/dummies.dart' as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -29,199 +29,355 @@ import 'package:mockito/src/dummies.dart' as _i8;
 // ignore_for_file: subtype_of_sealed_class
 // ignore_for_file: invalid_use_of_internal_member
 
-/// A class which mocks [AuthRemoteDataSource].
+class _FakeApiResponse_0<T1> extends _i1.SmartFake
+    implements _i2.ApiResponse<T1> {
+  _FakeApiResponse_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+/// A class which mocks [ApiManager].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAuthRemoteDataSource extends _i1.Mock
-    implements _i2.AuthRemoteDataSource {
-  MockAuthRemoteDataSource() {
+class MockApiManager extends _i1.Mock implements _i3.ApiManager {
+  MockApiManager() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>> login(
-    _i5.LoginRequestDto? dto, {
-    _i7.CancelToken? cancelToken,
+  _i4.Future<_i2.ApiResponse<T>> get<T>({
+    required String? path,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    _i5.CancelToken? cancelToken,
+    _i6.FromJson<dynamic>? fromJson,
+    String? listWrapperKey,
+    T Function(Object?)? extractor,
+    _i3.RequestPriority? priority = _i3.RequestPriority.normal,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(#login, [dto], {#cancelToken: cancelToken}),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.TokensDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(
-                      #login,
-                      [dto],
-                      {#cancelToken: cancelToken},
-                    ),
-                  ),
-                ),
-          )
-          as _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>);
-
-  @override
-  _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>> register(
-    _i5.RegisterRequestDto? dto, {
-    _i7.CancelToken? cancelToken,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#register, [dto], {#cancelToken: cancelToken}),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.TokensDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(
-                      #register,
-                      [dto],
-                      {#cancelToken: cancelToken},
-                    ),
-                  ),
-                ),
-          )
-          as _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>);
-
-  @override
-  _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>> refresh(
-    String? refreshToken, {
-    _i7.CancelToken? cancelToken,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #refresh,
-              [refreshToken],
-              {#cancelToken: cancelToken},
-            ),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.TokensDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(
-                      #refresh,
-                      [refreshToken],
-                      {#cancelToken: cancelToken},
-                    ),
-                  ),
-                ),
-          )
-          as _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>);
-
-  @override
-  _i3.Future<_i4.Result<_i5.ProfileDto, _i6.ApiError>> me({
-    _i7.CancelToken? cancelToken,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#me, [], {#cancelToken: cancelToken}),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.ProfileDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.ProfileDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(#me, [], {#cancelToken: cancelToken}),
-                  ),
-                ),
-          )
-          as _i3.Future<_i4.Result<_i5.ProfileDto, _i6.ApiError>>);
-
-  @override
-  _i3.Future<_i4.Result<_i5.ProfileDto, _i6.ApiError>> updateProfile(
-    Map<String, dynamic>? patch, {
-    _i7.CancelToken? cancelToken,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(
-              #updateProfile,
-              [patch],
-              {#cancelToken: cancelToken},
-            ),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.ProfileDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.ProfileDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(
-                      #updateProfile,
-                      [patch],
-                      {#cancelToken: cancelToken},
-                    ),
-                  ),
-                ),
-          )
-          as _i3.Future<_i4.Result<_i5.ProfileDto, _i6.ApiError>>);
-
-  @override
-  _i3.Future<_i4.Result<void, _i6.ApiError>> logout({
-    _i7.CancelToken? cancelToken,
-  }) =>
-      (super.noSuchMethod(
-            Invocation.method(#logout, [], {#cancelToken: cancelToken}),
-            returnValue: _i3.Future<_i4.Result<void, _i6.ApiError>>.value(
-              _i8.dummyValue<_i4.Result<void, _i6.ApiError>>(
+            Invocation.method(#get, [], {
+              #path: path,
+              #query: query,
+              #headers: headers,
+              #cancelToken: cancelToken,
+              #fromJson: fromJson,
+              #listWrapperKey: listWrapperKey,
+              #extractor: extractor,
+              #priority: priority,
+            }),
+            returnValue: _i4.Future<_i2.ApiResponse<T>>.value(
+              _FakeApiResponse_0<T>(
                 this,
-                Invocation.method(#logout, [], {#cancelToken: cancelToken}),
+                Invocation.method(#get, [], {
+                  #path: path,
+                  #query: query,
+                  #headers: headers,
+                  #cancelToken: cancelToken,
+                  #fromJson: fromJson,
+                  #listWrapperKey: listWrapperKey,
+                  #extractor: extractor,
+                  #priority: priority,
+                }),
               ),
             ),
           )
-          as _i3.Future<_i4.Result<void, _i6.ApiError>>);
+          as _i4.Future<_i2.ApiResponse<T>>);
 
   @override
-  _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>> appleSignIn(
-    _i5.SocialAuthRequestDto? dto, {
-    _i7.CancelToken? cancelToken,
+  _i4.Future<_i2.ApiResponse<T>> post<T>({
+    required String? path,
+    Object? body,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    _i5.CancelToken? cancelToken,
+    _i6.FromJson<dynamic>? fromJson,
+    String? listWrapperKey,
+    T Function(Object?)? extractor,
+    _i3.RequestPriority? priority = _i3.RequestPriority.normal,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(#appleSignIn, [dto], {#cancelToken: cancelToken}),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.TokensDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(
-                      #appleSignIn,
-                      [dto],
-                      {#cancelToken: cancelToken},
-                    ),
-                  ),
-                ),
+            Invocation.method(#post, [], {
+              #path: path,
+              #body: body,
+              #query: query,
+              #headers: headers,
+              #cancelToken: cancelToken,
+              #fromJson: fromJson,
+              #listWrapperKey: listWrapperKey,
+              #extractor: extractor,
+              #priority: priority,
+            }),
+            returnValue: _i4.Future<_i2.ApiResponse<T>>.value(
+              _FakeApiResponse_0<T>(
+                this,
+                Invocation.method(#post, [], {
+                  #path: path,
+                  #body: body,
+                  #query: query,
+                  #headers: headers,
+                  #cancelToken: cancelToken,
+                  #fromJson: fromJson,
+                  #listWrapperKey: listWrapperKey,
+                  #extractor: extractor,
+                  #priority: priority,
+                }),
+              ),
+            ),
           )
-          as _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>);
+          as _i4.Future<_i2.ApiResponse<T>>);
 
   @override
-  _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>> googleSignIn(
-    _i5.SocialAuthRequestDto? dto, {
-    _i7.CancelToken? cancelToken,
+  _i4.Future<_i2.ApiResponse<T>> put<T>({
+    required String? path,
+    Object? body,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    _i5.CancelToken? cancelToken,
+    _i6.FromJson<dynamic>? fromJson,
+    String? listWrapperKey,
+    T Function(Object?)? extractor,
+    _i3.RequestPriority? priority = _i3.RequestPriority.normal,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#put, [], {
+              #path: path,
+              #body: body,
+              #query: query,
+              #headers: headers,
+              #cancelToken: cancelToken,
+              #fromJson: fromJson,
+              #listWrapperKey: listWrapperKey,
+              #extractor: extractor,
+              #priority: priority,
+            }),
+            returnValue: _i4.Future<_i2.ApiResponse<T>>.value(
+              _FakeApiResponse_0<T>(
+                this,
+                Invocation.method(#put, [], {
+                  #path: path,
+                  #body: body,
+                  #query: query,
+                  #headers: headers,
+                  #cancelToken: cancelToken,
+                  #fromJson: fromJson,
+                  #listWrapperKey: listWrapperKey,
+                  #extractor: extractor,
+                  #priority: priority,
+                }),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.ApiResponse<T>>);
+
+  @override
+  _i4.Future<_i2.ApiResponse<T>> patch<T>({
+    required String? path,
+    Object? body,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    _i5.CancelToken? cancelToken,
+    _i6.FromJson<dynamic>? fromJson,
+    String? listWrapperKey,
+    T Function(Object?)? extractor,
+    _i3.RequestPriority? priority = _i3.RequestPriority.normal,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#patch, [], {
+              #path: path,
+              #body: body,
+              #query: query,
+              #headers: headers,
+              #cancelToken: cancelToken,
+              #fromJson: fromJson,
+              #listWrapperKey: listWrapperKey,
+              #extractor: extractor,
+              #priority: priority,
+            }),
+            returnValue: _i4.Future<_i2.ApiResponse<T>>.value(
+              _FakeApiResponse_0<T>(
+                this,
+                Invocation.method(#patch, [], {
+                  #path: path,
+                  #body: body,
+                  #query: query,
+                  #headers: headers,
+                  #cancelToken: cancelToken,
+                  #fromJson: fromJson,
+                  #listWrapperKey: listWrapperKey,
+                  #extractor: extractor,
+                  #priority: priority,
+                }),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.ApiResponse<T>>);
+
+  @override
+  _i4.Future<_i2.ApiResponse<T>> delete<T>({
+    required String? path,
+    Object? body,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    _i5.CancelToken? cancelToken,
+    _i6.FromJson<dynamic>? fromJson,
+    String? listWrapperKey,
+    T Function(Object?)? extractor,
+    _i3.RequestPriority? priority = _i3.RequestPriority.normal,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#delete, [], {
+              #path: path,
+              #body: body,
+              #query: query,
+              #headers: headers,
+              #cancelToken: cancelToken,
+              #fromJson: fromJson,
+              #listWrapperKey: listWrapperKey,
+              #extractor: extractor,
+              #priority: priority,
+            }),
+            returnValue: _i4.Future<_i2.ApiResponse<T>>.value(
+              _FakeApiResponse_0<T>(
+                this,
+                Invocation.method(#delete, [], {
+                  #path: path,
+                  #body: body,
+                  #query: query,
+                  #headers: headers,
+                  #cancelToken: cancelToken,
+                  #fromJson: fromJson,
+                  #listWrapperKey: listWrapperKey,
+                  #extractor: extractor,
+                  #priority: priority,
+                }),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.ApiResponse<T>>);
+
+  @override
+  _i4.Future<_i2.ApiResponse<R>> sendRequest<T, R>(
+    String? path, {
+    required T Function(Map<String, dynamic>)? fromJson,
+    required _i3.RequestMethod? method,
+    Map<String, dynamic>? queryParameters,
+    Object? data,
+    Map<String, String>? headers,
+    _i5.CancelToken? cancelToken,
+    String? listWrapperKey,
+    R Function(Object?)? extractor,
+    _i3.RequestPriority? priority = _i3.RequestPriority.normal,
   }) =>
       (super.noSuchMethod(
             Invocation.method(
-              #googleSignIn,
-              [dto],
-              {#cancelToken: cancelToken},
+              #sendRequest,
+              [path],
+              {
+                #fromJson: fromJson,
+                #method: method,
+                #queryParameters: queryParameters,
+                #data: data,
+                #headers: headers,
+                #cancelToken: cancelToken,
+                #listWrapperKey: listWrapperKey,
+                #extractor: extractor,
+                #priority: priority,
+              },
             ),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.TokensDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(
-                      #googleSignIn,
-                      [dto],
-                      {#cancelToken: cancelToken},
-                    ),
-                  ),
+            returnValue: _i4.Future<_i2.ApiResponse<R>>.value(
+              _FakeApiResponse_0<R>(
+                this,
+                Invocation.method(
+                  #sendRequest,
+                  [path],
+                  {
+                    #fromJson: fromJson,
+                    #method: method,
+                    #queryParameters: queryParameters,
+                    #data: data,
+                    #headers: headers,
+                    #cancelToken: cancelToken,
+                    #listWrapperKey: listWrapperKey,
+                    #extractor: extractor,
+                    #priority: priority,
+                  },
                 ),
+              ),
+            ),
           )
-          as _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>);
+          as _i4.Future<_i2.ApiResponse<R>>);
 
   @override
-  _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>> guestSignIn({
-    _i7.CancelToken? cancelToken,
+  _i4.Future<_i2.ApiResponse<T>> upload<T>({
+    required String? path,
+    required String? filePath,
+    String? fileKey = 'file',
+    Map<String, dynamic>? fields,
+    Map<String, String>? headers,
+    _i5.ProgressCallback? onSendProgress,
+    _i5.CancelToken? cancelToken,
+    _i6.FromJson<dynamic>? fromJson,
   }) =>
       (super.noSuchMethod(
-            Invocation.method(#guestSignIn, [], {#cancelToken: cancelToken}),
-            returnValue:
-                _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>.value(
-                  _i8.dummyValue<_i4.Result<_i5.TokensDto, _i6.ApiError>>(
-                    this,
-                    Invocation.method(#guestSignIn, [], {
-                      #cancelToken: cancelToken,
-                    }),
-                  ),
-                ),
+            Invocation.method(#upload, [], {
+              #path: path,
+              #filePath: filePath,
+              #fileKey: fileKey,
+              #fields: fields,
+              #headers: headers,
+              #onSendProgress: onSendProgress,
+              #cancelToken: cancelToken,
+              #fromJson: fromJson,
+            }),
+            returnValue: _i4.Future<_i2.ApiResponse<T>>.value(
+              _FakeApiResponse_0<T>(
+                this,
+                Invocation.method(#upload, [], {
+                  #path: path,
+                  #filePath: filePath,
+                  #fileKey: fileKey,
+                  #fields: fields,
+                  #headers: headers,
+                  #onSendProgress: onSendProgress,
+                  #cancelToken: cancelToken,
+                  #fromJson: fromJson,
+                }),
+              ),
+            ),
           )
-          as _i3.Future<_i4.Result<_i5.TokensDto, _i6.ApiError>>);
+          as _i4.Future<_i2.ApiResponse<T>>);
+
+  @override
+  _i4.Future<String> download({
+    required String? path,
+    required String? savePath,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    _i5.ProgressCallback? onReceiveProgress,
+    _i5.CancelToken? cancelToken,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#download, [], {
+              #path: path,
+              #savePath: savePath,
+              #query: query,
+              #headers: headers,
+              #onReceiveProgress: onReceiveProgress,
+              #cancelToken: cancelToken,
+            }),
+            returnValue: _i4.Future<String>.value(
+              _i7.dummyValue<String>(
+                this,
+                Invocation.method(#download, [], {
+                  #path: path,
+                  #savePath: savePath,
+                  #query: query,
+                  #headers: headers,
+                  #onReceiveProgress: onReceiveProgress,
+                  #cancelToken: cancelToken,
+                }),
+              ),
+            ),
+          )
+          as _i4.Future<String>);
 }

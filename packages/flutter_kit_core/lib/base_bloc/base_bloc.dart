@@ -9,7 +9,7 @@ import 'lifecycle_bloc.dart';
 ///
 /// onReady() is triggered by post-frame callback of BaseBlocView;
 /// BaseBloc remains independent of the widget render loop and in unit tests
-/// TestWidgetsFlutterBinding gerektirmez.
+/// Does not require TestWidgetsFlutterBinding in unit tests.
 ///
 /// Example:
 /// ```dart

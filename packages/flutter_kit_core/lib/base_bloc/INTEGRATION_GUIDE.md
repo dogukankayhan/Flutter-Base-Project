@@ -1,27 +1,27 @@
-# Migration Guide: flutter_base_kit için Base Bloc Entegrasyonu
+# Migration Guide: Base BLoC Integration for flutter_base_kit
 
-Bu rehber, `flutter_base_kit` projesine Base Bloc yapısının nasıl entegre edileceğini açıklar.
+This guide explains how to integrate the Base BLoC architecture into the `flutter_base_kit` project.
 
-## 📋 Ön Hazırlık
+## 📋 Prerequisites
 
-### 1. Dependencies Kontrol
+### 1. Check Dependencies
 
-`pubspec.yaml` dosyanızda şunlar olmalı:
+Your `pubspec.yaml` file must contain:
 
 ```yaml
 dependencies:
   flutter:
     sdk: flutter
-  flutter_bloc: ^8.1.3         # EKLE
-  equatable: ^2.0.5             # EKLE
-  get_it: ^7.6.0                # ZATEN VAR
-  connectivity_plus: ^5.0.0     # ZATEN VAR
-  dio: ^5.4.0                   # ZATEN VAR
+  flutter_bloc: ^8.1.3         # ADD
+  equatable: ^2.0.5             # ADD
+  get_it: ^7.6.0                # ALREADY EXISTS
+  connectivity_plus: ^5.0.0     # ALREADY EXISTS
+  dio: ^5.4.0                   # ALREADY EXISTS
 ```
 
-### 2. Proje Yapısını Kontrol
+### 2. Check Project Structure
 
-Projenizde şu yapı olmalı:
+Your project should have the following structure:
 
 ```
 lib/
@@ -30,33 +30,33 @@ lib/
       auth_manager/
         auth/
           manager/
-            auth_manager.dart    # ✅ Var
+            auth_manager.dart    # ✅ Exists
     networking/
       core/
         di/
-          service_locator.dart   # ✅ Var
+          service_locator.dart   # ✅ Exists
         network/
           api/
-            api_manager.dart     # ✅ Var
+            api_manager.dart     # ✅ Exists
 ```
 
 ---
 
-## 🚀 Kurulum Adımları
+## 🚀 Installation Steps
 
-### Adım 1: Base Bloc Dosyalarını Ekle
+### Step 1: Add Base BLoC Files
 
 ```bash
-# base_bloc klasörünü lib/core/ altına kopyala
+# Copy the base_bloc folder under lib/core/
 cp -r base_bloc/ your_project/lib/core/
 ```
 
-Sonuç yapısı:
+Result structure:
 
 ```
 lib/
   core/
-    base_bloc/              ← YENİ
+    base_bloc/              ← NEW
       base_state.dart
       base_cubit.dart
       base_bloc_view.dart
@@ -67,15 +67,15 @@ lib/
     networking/
 ```
 
-### Adım 2: Dependencies Yükle
+### Step 2: Install Dependencies
 
 ```bash
 flutter pub get
 ```
 
-### Adım 3: Main.dart Kontrolü
+### Step 3: Verify Main.dart
 
-`main.dart` dosyanızda GetIt ve AuthManager init edildiğinden emin olun:
+Ensure that GetIt and AuthManager are initialized in your `main.dart` file:
 
 ```dart
 import 'package:flutter_base_kit/core/networking/core/di/service_locator.dart';
@@ -94,13 +94,10 @@ void main() async {
   );
   
   // 2. Initialize AuthManager
-  await AuthManager.init(
-    loginUseCase: getIt<LoginUseCase>(),
-    registerUseCase: getIt<RegisterUseCase>(),
-    meUseCase: getIt<MeUseCase>(),
-    updateProfileUseCase: getIt<UpdateProfileUseCase>(),
-    logoutUseCase: getIt<LogoutUseCase>(),
-    refreshUseCase: getIt<RefreshUseCase>(),
+  await setupAuth(
+    getIt: getIt,
+    apiManager: getIt<ApiManager>(),
+    tokenStore: getIt<TokenStore>(),
   );
   
   runApp(const MyApp());
@@ -109,11 +106,11 @@ void main() async {
 
 ---
 
-## 📝 İlk Feature'ınızı Oluşturun
+## 📝 Create Your First Feature
 
-### Örnek: Login Ekranı
+### Example: Login Screen
 
-#### 1. State Oluştur
+#### 1. Create State
 
 `lib/features/auth/login/cubit/login_state.dart`:
 
@@ -163,7 +160,7 @@ class LoginState extends BaseState {
 }
 ```
 
-#### 2. Cubit Oluştur
+#### 2. Create Cubit
 
 `lib/features/auth/login/cubit/login_cubit.dart`:
 
@@ -183,7 +180,7 @@ class LoginCubit extends BaseCubit<LoginState> {
   @override
   void onReady() {
     super.onReady();
-    // Widget render'dan sonra çalışacak kod
+    // Code that will run after widget is rendered
   }
 
   void setEmail(String value) {
@@ -213,7 +210,7 @@ class LoginCubit extends BaseCubit<LoginState> {
 
     safeEmit(state.copyWith(isLoading: true));
 
-    // AuthManager kullanarak login
+    // Login using AuthManager
     final result = await authManager.login(
       state.email,
       state.password,
@@ -221,7 +218,7 @@ class LoginCubit extends BaseCubit<LoginState> {
 
     result.when(
       ok: (_) {
-        // Login başarılı
+        // Login successful
         safeEmit(state.copyWith(
           isLoading: false,
           errorMessage: null,
@@ -240,7 +237,7 @@ class LoginCubit extends BaseCubit<LoginState> {
 }
 ```
 
-#### 3. View Oluştur
+#### 3. Create View
 
 `lib/features/auth/login/view/login_screen.dart`:
 
@@ -258,7 +255,7 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BaseBlocView<LoginCubit, LoginState>(
       create: () => LoginCubit(),
-      builder: (context, state) {
+      builder: (context, state, cubit) {
         return Scaffold(
           appBar: AppBar(title: const Text('Login')),
           body: Padding(
@@ -344,16 +341,16 @@ class LoginScreen extends StatelessWidget {
 
 ---
 
-## 🎯 Önemli Noktalar
+## 🎯 Important Points
 
-### 1. AuthManager Kullanımı
+### 1. Using AuthManager
 
-BaseCubit'te AuthManager singleton olarak hazır:
+AuthManager is available in BaseCubit via DI:
 
 ```dart
 class MyCubit extends BaseCubit<MyState> {
   Future<void> doSomething() async {
-    // Direkt authManager kullan
+    // Use authManager directly
     final result = await authManager.login(email, password);
     
     result.when(
@@ -364,14 +361,14 @@ class MyCubit extends BaseCubit<MyState> {
 }
 ```
 
-### 2. ApiManager Kullanımı
+### 2. Using ApiManager
 
-BaseCubit'te ApiManager GetIt'ten otomatik alınır:
+ApiManager is automatically resolved from GetIt in BaseCubit:
 
 ```dart
 class UserCubit extends BaseCubit<UserState> {
   Future<void> loadUser() async {
-    // apiManager hazır
+    // apiManager is ready
     final response = await apiManager.get<UserDto>(
       path: '/users/me',
       fromJson: (json) => UserDto.fromJson(json as Map<String, dynamic>),
@@ -384,12 +381,12 @@ class UserCubit extends BaseCubit<UserState> {
 
 ### 3. Result Pattern
 
-Proje `Result<T, ApiError>` pattern kullanıyor:
+The project uses the `Result<T, ApiError>` pattern:
 
 ```dart
 final result = await authManager.login(email, password);
 
-// when ile handle et
+// Handle with when
 result.when(
   ok: (data) {
     // Success
@@ -403,7 +400,7 @@ result.when(
 
 ### 4. Safe Emit
 
-Async işlemlerde mutlaka `safeEmit` kullan:
+Always use `safeEmit` in async operations:
 
 ```dart
 Future<void> loadData() async {
@@ -420,9 +417,9 @@ Future<void> loadData() async {
 
 ---
 
-## 🧪 Test Yazma
+## 🧪 Writing Tests
 
-Bloc test yazmak çok kolay:
+Writing Bloc tests is very simple:
 
 ```dart
 import 'package:bloc_test/bloc_test.dart';
@@ -471,7 +468,7 @@ void main() {
 }
 ```
 
-Test için ek dependency:
+Additional dependency for tests:
 
 ```yaml
 dev_dependencies:
@@ -481,7 +478,7 @@ dev_dependencies:
 
 ---
 
-## 📊 Feature Yapısı Önerisi
+## 📊 Suggested Feature Structure
 
 ```
 lib/
@@ -514,18 +511,18 @@ lib/
 
 ## ✅ Checklist
 
-Yeni feature eklerken:
+When adding a new feature:
 
-- [ ] State sınıfı oluşturuldu
-- [ ] State'de copyWith metodu var
-- [ ] State'de Equatable props doğru tanımlandı
-- [ ] Cubit sınıfı BaseCubit'ten türetildi
-- [ ] onInit ve onReady implement edildi
-- [ ] safeEmit kullanılıyor
-- [ ] Result pattern doğru kullanılıyor
-- [ ] View BaseBlocView kullanıyor
-- [ ] Error handling yapıldı
-- [ ] Test yazıldı
+- [ ] State class created
+- [ ] State has copyWith method
+- [ ] Equatable props correctly defined in State
+- [ ] Cubit class inherits from BaseCubit
+- [ ] onInit and onReady implemented
+- [ ] safeEmit is used
+- [ ] Result pattern correctly used
+- [ ] View uses BaseBlocView
+- [ ] Error handling completed
+- [ ] Test written
 
 ---
 
@@ -533,7 +530,7 @@ Yeni feature eklerken:
 
 ### Problem: "type 'ApiManager' is not registered"
 
-**Çözüm**: setupDI'ın çağrıldığından emin olun
+**Solution**: Make sure `setupDI` is called
 
 ```dart
 void main() async {
@@ -542,26 +539,26 @@ void main() async {
 }
 ```
 
-### Problem: "AuthManager.instance' was called on null"
+### Problem: "AuthManager.instance was called on null"
 
-**Çözüm**: AuthManager.init'in çağrıldığından emin olun
+**Solution**: Make sure AuthManager setup is completed
 
 ```dart
 void main() async {
   await setupDI(...);
-  await AuthManager.init(...);
+  await setupAuth(...);
   runApp(MyApp());
 }
 ```
 
-### Problem: State güncellenmiyor
+### Problem: State is not updating
 
-**Çözüm**: Equatable props kontrolü
+**Solution**: Check Equatable props
 
 ```dart
 @override
 List<Object?> get props => [
-  // TÜM field'ları ekle
+  // Add ALL fields
   email,
   password,
   ...super.props,
@@ -570,11 +567,11 @@ List<Object?> get props => [
 
 ---
 
-## 📚 Kaynaklar
+## 📚 Resources
 
-- **Proje İçi**:
-  - `lib/core/base_bloc/README.md` - Detaylı dokümantasyon
-  - `lib/core/base_bloc/example_usage.dart` - Örnek kodlar
+- **Internal**:
+  - `lib/core/base_bloc/README.md` - Detailed documentation
+  - `lib/core/base_bloc/example_usage.dart` - Example code
   
 - **External**:
   - [Flutter Bloc Docs](https://bloclibrary.dev/)
@@ -583,13 +580,13 @@ List<Object?> get props => [
 
 ---
 
-## 🎉 Sonuç
+## 🎉 Conclusion
 
-Artık Base Bloc yapısı projenize entegre edildi! 
+The Base BLoC architecture is now integrated into your project!
 
-**Sonraki adımlar:**
-1. İlk feature'ınızı oluşturun (örn: Login)
-2. Test yazın
-3. Diğer feature'ları ekleyin
+**Next steps:**
+1. Create your first feature (e.g. Login)
+2. Write tests
+3. Add other features
 
-Başarılar! 🚀
+Best of luck! 🚀

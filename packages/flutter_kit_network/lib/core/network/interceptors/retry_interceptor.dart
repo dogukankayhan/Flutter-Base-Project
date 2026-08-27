@@ -11,11 +11,21 @@ class RetryInterceptor extends Interceptor {
   final Duration baseDelay;
   final bool waitUntilOnline;
 
+  /// How long to wait for connectivity to come back before giving up and
+  /// letting the original error propagate. Without this bound, a flaky or
+  /// incorrect `connectivity_plus` report (a known issue on some emulators)
+  /// can make this wait forever, since `onConnectivityChanged` may never
+  /// fire again if the device was actually online the whole time — which
+  /// permanently occupies one of `RequestQueue`'s concurrency slots and
+  /// starves every other queued request (e.g. an unrelated POST) behind it.
+  final Duration maxOfflineWait;
+
   RetryInterceptor({
     required this.dio,
     this.maxRetries = 3,
     this.baseDelay = const Duration(milliseconds: 400),
     this.waitUntilOnline = true,
+    this.maxOfflineWait = const Duration(seconds: 15),
   });
 
   bool _isIdempotent(String method) =>
@@ -47,10 +57,10 @@ class RetryInterceptor extends Interceptor {
     final status = await Connectivity().checkConnectivity();
     final isOnline = !status.contains(ConnectivityResult.none);
     if (isOnline) return;
-    // Wait until we get any non-none status
-    await Connectivity().onConnectivityChanged.firstWhere(
-      (result) => !result.contains(ConnectivityResult.none),
-    );
+    // Wait until we get any non-none status, but don't wait forever.
+    await Connectivity().onConnectivityChanged
+        .firstWhere((result) => !result.contains(ConnectivityResult.none))
+        .timeout(maxOfflineWait, onTimeout: () => const []);
   }
 
   @override

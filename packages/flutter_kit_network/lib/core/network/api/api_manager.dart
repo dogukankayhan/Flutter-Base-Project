@@ -4,6 +4,7 @@ import 'api_manager_interface.dart';
 import '../client/http_client_interface.dart';
 import '../error/error_mapper.dart';
 import '../error/api_exception.dart';
+import '../interceptors/cache_interceptor.dart';
 import '../serializer/serializer_interface.dart';
 import '../queue/request_queue.dart';
 import '../analytics/analytics_manager.dart';
@@ -226,7 +227,26 @@ class DioApiManager implements ApiManager {
     final parsedList = listData
         .map((e) => fromJson((e as Map).cast<String, dynamic>()))
         .toList();
-    return parsedList as T;
+
+    // `fromJson` is typed `FromJson<dynamic>`, so `.map().toList()` above
+    // always reifies as `List<dynamic>` regardless of what the elements
+    // actually are at runtime — Dart can't recover the element type from
+    // `T` (e.g. `List<UserDto>`) since generic type arguments aren't
+    // destructurable at runtime without codegen/mirrors. `parsedList as T`
+    // therefore always throws for any concrete element type. Fail with a
+    // clear, actionable message instead of a confusing TypeError, and
+    // point callers at `sendRequest<ElementType, List<ElementType>>(...)`,
+    // which keeps the element type as its own generic parameter and does
+    // not hit this limitation.
+    try {
+      return parsedList as T;
+    } on TypeError {
+      throw ApiException.parse(
+        'get<$T>() cannot reify a typed list at runtime (only get<List<dynamic>>() '
+        'is safe here). Use sendRequest<ElementType, $T>(fromJson: ..., '
+        'method: RequestMethod.get) instead for typed list responses.',
+      );
+    }
   }
 
   /// Auto-detect common list wrapper keys
@@ -387,6 +407,108 @@ class DioApiManager implements ApiManager {
   }
 
   @override
+  Future<ApiResponse<R>> sendRequest<T, R>(
+    String path, {
+    required T Function(Map<String, dynamic>) fromJson,
+    required RequestMethod method,
+    Map<String, dynamic>? queryParameters,
+    Object? data,
+    Map<String, String>? headers,
+    CancelToken? cancelToken,
+    String? listWrapperKey,
+    R Function(Object?)? extractor,
+    RequestPriority priority = RequestPriority.normal,
+  }) async {
+    final httpMethod = method.httpValue;
+    final startTime = DateTime.now();
+    try {
+      analyticsManager?.trackRequestStart(path, httpMethod);
+      final response = requestQueue != null
+          ? await requestQueue!.enqueue(
+              () => _executeRequest(
+                method: httpMethod,
+                path: path,
+                body: data,
+                query: queryParameters,
+                headers: headers,
+                cancelToken: cancelToken,
+              ),
+              priority: priority,
+            )
+          : await _executeRequest(
+              method: httpMethod,
+              path: path,
+              body: data,
+              query: queryParameters,
+              headers: headers,
+              cancelToken: cancelToken,
+            );
+
+      final R parsed;
+      if (extractor != null) {
+        parsed = extractor(response.data);
+      } else if (<T>[] is R) {
+        parsed =
+            _bodyParser<T>(
+                  response.data,
+                  fromJson,
+                  listWrapperKey: listWrapperKey,
+                )
+                as R;
+      } else {
+        final raw = _extractMap(response.data);
+        parsed = fromJson(raw) as R;
+      }
+
+      final duration = DateTime.now().difference(startTime);
+      analyticsManager?.trackRequestSuccess(path, httpMethod, duration);
+      return ApiResponse<R>(
+        data: parsed,
+        statusCode: response.statusCode,
+        headers: response.headers.map.map((k, v) => MapEntry(k, v.join(','))),
+        requestUri: response.requestOptions.uri.toString(),
+        raw: response.data,
+      );
+    } on DioException catch (e) {
+      final duration = DateTime.now().difference(startTime);
+      analyticsManager?.trackRequestFailure(path, httpMethod, duration, e);
+      throw ApiException(ErrorMapper.fromDio(e));
+    } catch (e) {
+      final duration = DateTime.now().difference(startTime);
+      analyticsManager?.trackRequestError(path, httpMethod, duration, e);
+      rethrow;
+    }
+  }
+
+  List<T> _bodyParser<T>(
+    dynamic responseBody,
+    T Function(Map<String, dynamic>) fromJson, {
+    String? listWrapperKey,
+  }) {
+    try {
+      dynamic raw = responseBody;
+      if (raw is Map<String, dynamic>) {
+        raw = listWrapperKey != null ? raw[listWrapperKey] : raw['data'] ?? raw;
+      }
+      if (raw is! List) {
+        throw ApiException.parse('Expected List, got ${raw.runtimeType}');
+      }
+      return raw.whereType<Map<String, dynamic>>().map(fromJson).toList();
+    } on ApiException {
+      rethrow;
+    } catch (e, st) {
+      throw ApiException.parse('Body parse error: $e\n$st');
+    }
+  }
+
+  Map<String, dynamic> _extractMap(dynamic responseBody) {
+    if (responseBody is Map<String, dynamic>) {
+      return (responseBody['data'] as Map<String, dynamic>?) ?? responseBody;
+    }
+    throw ApiException.parse('Expected Map, got ${responseBody.runtimeType}');
+  }
+
+  @override
   Future<ApiResponse<T>> upload<T>({
     required String path,
     required String filePath,
@@ -452,6 +574,35 @@ class DioApiManager implements ApiManager {
       return savePath;
     } on DioException catch (e) {
       throw ApiException(ErrorMapper.fromDio(e));
+    }
+  }
+
+  @override
+  Future<List<int>> getBytes({
+    required String path,
+    Map<String, dynamic>? query,
+    Map<String, String>? headers,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await client.dio.get<List<int>>(
+        path,
+        queryParameters: query,
+        options: Options(headers: headers, responseType: ResponseType.bytes),
+        cancelToken: cancelToken,
+      );
+      return response.data ?? const [];
+    } on DioException catch (e) {
+      throw ApiException(ErrorMapper.fromDio(e));
+    }
+  }
+
+  @override
+  void invalidateCache(String path) {
+    for (final interceptor in client.dio.interceptors) {
+      if (interceptor is CacheInterceptor) {
+        interceptor.removeCacheEntry(path);
+      }
     }
   }
 }

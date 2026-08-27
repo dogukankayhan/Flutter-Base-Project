@@ -2,20 +2,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter_kit_core/domain/base_repository.dart';
 import 'package:flutter_kit_network/core/network/error/api_error.dart';
 import 'package:flutter_kit_network/core/utils/result.dart';
-import '../../domain/entity/auth_entity.dart';
-import '../../domain/entity/profile_entity.dart';
+import '../entity/auth_entity.dart';
+import '../entity/password_reset_entity.dart';
+import '../entity/profile_entity.dart';
 
 abstract class AuthRepository implements BaseRepository {
-  Future<Result<AuthTokens, ApiError>> login({
-    required String email,
-    required String password,
+  Future<Result<AuthTokens, ApiError>> login(
+    LoginRequest request, {
     CancelToken? cancelToken,
   });
-  Future<Result<AuthTokens, ApiError>> register({
-    required String email,
-    required String password,
-    String? firstName,
-    String? lastName,
+  Future<Result<AuthTokens, ApiError>> register(
+    RegisterRequest request, {
     CancelToken? cancelToken,
   });
   Future<Result<AuthTokens, ApiError>> refresh({
@@ -29,14 +26,24 @@ abstract class AuthRepository implements BaseRepository {
   });
   Future<Result<void, ApiError>> logout({CancelToken? cancelToken});
 
-  // Social Auth
-  Future<Result<AuthTokens, ApiError>> appleSignIn({
-    required String idToken,
-    CancelToken? cancelToken,
-  });
-  Future<Result<AuthTokens, ApiError>> googleSignIn({
-    required String idToken,
+  // Social auth
+  Future<Result<AuthTokens, ApiError>> socialSignIn(
+    SocialSignInRequest request, {
     CancelToken? cancelToken,
   });
   Future<Result<AuthTokens, ApiError>> guestSignIn({CancelToken? cancelToken});
+
+  // Password reset — see CLAUDE.md Rule 3; a generic skeleton, extend as needed.
+  Future<Result<void, ApiError>> startPasswordReset(
+    PasswordResetStartRequest request, {
+    CancelToken? cancelToken,
+  });
+  Future<Result<void, ApiError>> verifyPasswordReset(
+    PasswordResetVerifyRequest request, {
+    CancelToken? cancelToken,
+  });
+  Future<Result<void, ApiError>> completePasswordReset(
+    PasswordResetCompleteRequest request, {
+    CancelToken? cancelToken,
+  });
 }

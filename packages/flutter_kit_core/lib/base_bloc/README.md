@@ -1,41 +1,43 @@
-# Base Bloc Architecture
+# Base BLoC Architecture
 
-Flutter Bloc paketini kullanarak oluşturulmuş, **flutter_base_kit** projesine özel Base Architecture yapısı.
+Base Architecture structure developed using the Flutter Bloc package, specific to the **flutter_base_kit** project.
 
-## 📁 Dosya Yapısı
+## 📁 File Structure
 
 ```
 lib/core/base_bloc/
-├── base_state.dart              # Base state sınıfları
-├── base_cubit.dart              # Base cubit sınıfı
-├── base_bloc_view.dart          # Base view widget'ı
-├── active_cubit_helper.dart     # Active key helper fonksiyonları
-├── example_usage.dart           # Örnek kullanım
-└── README.md                   # Bu dosya
+├── base_state.dart              # Base state classes
+├── base_cubit.dart              # Base cubit class
+├── base_bloc_view.dart          # Base view widget
+├── active_cubit_helper.dart     # Active key helper functions
+├── example_usage.dart           # Example usage
+└── README.md                    # This file
 ```
 
-## 🎯 Özellikler
+## 🎯 Features
 
 ### BaseCubit
 - ✅ **Lifecycle Management**: `onInit`, `onReady`, `close`
-- ✅ **Auth Integration**: `AuthManager.instance` singleton
-- ✅ **API Integration**: `ApiManager` (GetIt'ten)
-- ✅ **Result Pattern**: `Result<T, ApiError>` desteği
-- ✅ **Safe Emit**: Cubit kapalıyken emit hatalarını önler
-- ✅ **Context Access**: BuildContext erişimi
+- ✅ **Auth Integration**: `AuthManager` instance accessed dynamically
+- ✅ **API Integration**: `ApiManager` (obtained from GetIt)
+- ✅ **Result Pattern**: Built-in support for `Result<T, ApiError>`
+- ✅ **Safe Emit**: Prevents crash-on-emit errors when a Cubit is closed
+- ✅ **Context Access**: Accessible BuildContext
 
 ### BaseBlocView
-- ✅ **Active Key System**: GetIt ile key-based cubit management
-- ✅ **Lifecycle Callbacks**: onInit, onReady, onDispose
-- ✅ **Post-Frame Support**: Opsiyonel post-frame callback
-- ✅ **Auto Cleanup**: Cubit otomatik dispose edilir
+- ✅ **Active Key System**: Key-based cubit management with GetIt
+- ✅ **Lifecycle Callbacks**: `onInit`, `onReady`, `onDispose` callbacks
+- ✅ **Post-Frame Support**: Optional post-frame callback execution
+- ✅ **Auto Cleanup**: Cubit is automatically disposed of when the view closes
 
 ### BaseState
-- ✅ **Equatable**: Performans optimizasyonu
-- ✅ **Common Properties**: isLoading, isValid, errorMessage
+- ✅ **Equatable**: Built-in support for performance optimizations
+- ✅ **Common Properties**: `isLoading`, `isValid`, `errorMessage` properties
 - ✅ **Type Safety**: Compile-time type checking
 
-## 🚀 Kurulum
+---
+
+## 🚀 Installation
 
 ### 1. Dependencies
 
@@ -43,22 +45,22 @@ lib/core/base_bloc/
 dependencies:
   flutter_bloc: ^8.1.3
   equatable: ^2.0.5
-  get_it: ^7.6.0  # Zaten projede var
+  get_it: ^7.6.0  # Already exists in the project
 ```
 
-### 2. Dosyaları Ekle
+### 2. Add Files
 
 ```bash
-# base_bloc klasörünü lib/core/ altına kopyala
+# Copy the base_bloc folder under lib/core/
 cp -r base_bloc/ lib/core/
 ```
 
-### 3. Proje Yapısı
+### 3. Project Structure
 
 ```
 lib/
   core/
-    base_bloc/              ← YENİ
+    base_bloc/              ← NEW
       base_state.dart
       base_cubit.dart
       base_bloc_view.dart
@@ -73,11 +75,13 @@ lib/
           service_locator.dart  # GetIt setup
 ```
 
-## 📚 Kullanım
+---
 
-### Basit Örnek
+## 📚 Usage
 
-#### 1. State Oluştur
+### Simple Example
+
+#### 1. Create State
 
 ```dart
 import 'package:flutter_base_kit/core/base_bloc/base_state.dart';
@@ -111,7 +115,7 @@ class CounterState extends BaseState {
 }
 ```
 
-#### 2. Cubit Oluştur
+#### 2. Create Cubit
 
 ```dart
 import 'package:flutter_base_kit/core/base_bloc/base_cubit.dart';
@@ -128,7 +132,7 @@ class CounterCubit extends BaseCubit<CounterState> {
   @override
   void onReady() {
     super.onReady();
-    // API çağrıları buraya
+    // API calls go here
   }
 
   void increment() {
@@ -141,7 +145,7 @@ class CounterCubit extends BaseCubit<CounterState> {
 }
 ```
 
-#### 3. View Oluştur
+#### 3. Create View
 
 ```dart
 import 'package:flutter_base_kit/core/base_bloc/base_bloc_view.dart';
@@ -183,25 +187,27 @@ class CounterScreen extends StatelessWidget {
 }
 ```
 
-## 🔥 AuthManager ve ApiManager Kullanımı
+---
 
-### AuthManager (Singleton)
+## 🔥 Using AuthManager and ApiManager
+
+### AuthManager (from GetIt)
 
 ```dart
 class LoginCubit extends BaseCubit<LoginState> {
   Future<void> login(String email, String password) async {
     safeEmit(state.copyWith(isLoading: true));
     
-    // AuthManager singleton instance
+    // AuthManager instance via DI
     final result = await authManager.login(email, password);
     
     result.when(
       ok: (_) {
-        // Login başarılı
+        // Login successful
         safeEmit(state.copyWith(isLoading: false));
       },
       err: (error) {
-        // Hata
+        // Login failed
         safeEmit(state.copyWith(
           isLoading: false,
           errorMessage: error.message,
@@ -220,7 +226,7 @@ class UserCubit extends BaseCubit<UserState> {
     safeEmit(state.copyWith(isLoading: true));
     
     try {
-      // ApiManager GetIt'ten gelir
+      // ApiManager comes from GetIt
       final response = await apiManager.get<UserDto>(
         path: '/users/me',
         fromJson: (json) => UserDto.fromJson(json as Map<String, dynamic>),
@@ -240,28 +246,30 @@ class UserCubit extends BaseCubit<UserState> {
 }
 ```
 
-## 🎓 İleri Seviye Özellikler
+---
+
+## 🎓 Advanced Features
 
 ### 1. Active Key System
 
-Aynı tipten birden fazla ekran açıkken bunları ayırt etmek için:
+To distinguish when multiple screens of the same type are open in the navigation stack:
 
 ```dart
-// Ekran 1
+// Screen 1
 BaseBlocView<DetailCubit, DetailState>(
   create: () => DetailCubit('item-123'),
   activeKey: 'detail-123',
   builder: (context, state) => DetailUI(),
 )
 
-// Ekran 2
+// Screen 2
 BaseBlocView<DetailCubit, DetailState>(
   create: () => DetailCubit('item-456'),
   activeKey: 'detail-456',
   builder: (context, state) => DetailUI(),
 )
 
-// Başka bir yerden erişim
+// Access from elsewhere
 import 'package:flutter_base_kit/core/base_bloc/active_cubit_helper.dart';
 
 final cubit = getActiveOrNull<DetailCubit>(key: 'detail-123');
@@ -292,12 +300,12 @@ BaseBlocView<MyCubit, MyState>(
 ```dart
 BaseBlocView<MyCubit, MyState>(
   create: () => MyCubit(),
-  usePostFrame: false, // onReady hemen çağrılır
+  usePostFrame: false, // onReady is called immediately
   builder: (context, state) => MyUI(),
 )
 ```
 
-### 4. Result Pattern ile Error Handling
+### 4. Error Handling with Result Pattern
 
 ```dart
 class DataCubit extends BaseCubit<DataState> {
@@ -322,78 +330,62 @@ class DataCubit extends BaseCubit<DataState> {
     } catch (e) {
       safeEmit(state.copyWith(
         isLoading: false,
-        errorMessage: 'Beklenmeyen hata: $e',
+        errorMessage: 'Unexpected error: $e',
       ));
     }
   }
 }
 ```
 
-## 🔄 Mevcut Yapı ile Entegrasyon
+---
+
+## 🔄 Integration with the Existing Structure
 
 ### GetIt Setup
 
-Proje zaten GetIt kullanıyor (`service_locator.dart`):
+The project already uses GetIt (`service_locator.dart`):
 
 ```dart
 // lib/core/networking/core/di/service_locator.dart
 final getIt = GetIt.instance;
 
 Future<void> setupDI({...}) async {
-  // ApiManager zaten kayıtlı
+  // ApiManager is registered
   getIt.registerLazySingleton<ApiManager>(...);
 }
 ```
 
-Base Cubit bu yapıyı kullanır:
+BaseCubit accesses these DI services:
 
 ```dart
 abstract class BaseCubit<T extends BaseState> extends Cubit<T> {
-  // GetIt'ten ApiManager al
+  // Get ApiManager from GetIt
   ApiManager get apiManager => getIt<ApiManager>();
   
-  // Singleton AuthManager
-  AuthManager get authManager => AuthManager.instance;
+  // AuthManager from GetIt
+  AuthManager get authManager => getIt<AuthManager>();
 }
 ```
 
-### AuthManager Singleton
-
-AuthManager zaten singleton pattern kullanıyor:
-
-```dart
-class AuthManager extends ChangeNotifier {
-  static late final AuthManager instance;
-  
-  static Future<void> init({...}) async {
-    instance = AuthManager._(...);
-  }
-}
-```
-
-Base Cubit direkt erişir:
-
-```dart
-final result = await authManager.login(email, password);
-```
+---
 
 ## 📖 Best Practices
 
-### 1. State İsimlendirme
+### 1. State Naming
 
 ```dart
-// ✅ İyi
+// ✅ Good
 class UserState extends BaseState { ... }
 class ProductListState extends BaseState { ... }
 
-// ❌ Kötü  
+// ❌ Bad
 class UserData extends BaseState { ... }
 ```
 
 ### 2. copyWith Pattern
 
 ```dart
-// ✅ İyi - Her field için override
+// ✅ Good - Override for each field
 UserState copyWith({
   User? user,
   bool? isLoading,
@@ -407,76 +399,78 @@ UserState copyWith({
 }
 ```
 
-### 3. API Çağrıları
+### 3. API Calls
 
 ```dart
-// ✅ İyi - onReady'de
+// ✅ Good - inside onReady
 @override
 void onReady() {
   super.onReady();
   loadInitialData();
 }
 
-// ❌ Kötü - onInit'de
+// ❌ Bad - inside onInit
 @override
 void onInit() {
   super.onInit();
-  loadInitialData(); // Widget henüz render edilmedi!
+  loadInitialData(); // Widget not rendered yet!
 }
 ```
 
 ### 4. Error Handling
 
 ```dart
-// ✅ İyi - Result pattern kullan
+// ✅ Good - Use Result pattern
 result.when(
   ok: (data) => handleSuccess(data),
   err: (error) => handleError(error),
 );
 
-// ❌ Kötü - Throw catch without proper handling
+// ❌ Bad - Throw catch without proper handling
 try {
   await riskyOperation();
 } catch (e) {
-  print(e); // Sadece log yeterli değil
+  print(e); // Just logging is not enough
 }
 ```
+
+---
 
 ## 🐛 Common Issues
 
 ### Issue 1: "Bad state: Cannot emit new states after calling close"
 
-**Çözüm**: `safeEmit` kullan
+**Solution**: Use `safeEmit`
 
 ```dart
-// ✅ İyi
+// ✅ Good
 void updateData() {
   safeEmit(state.copyWith(data: newData));
 }
 
-// ❌ Kötü
+// ❌ Bad
 void updateData() {
   emit(state.copyWith(data: newData));
 }
 ```
 
-### Issue 2: State güncellenmiyor
+### Issue 2: State is not updating
 
-**Çözüm**: Equatable props'ları kontrol et
+**Solution**: Check Equatable props
 
 ```dart
-// ✅ İyi
+// ✅ Good
 @override
 List<Object?> get props => [user, posts, ...super.props];
 
-// ❌ Kötü
+// ❌ Bad
 @override
 List<Object?> get props => super.props;
 ```
 
 ### Issue 3: GetIt registration error
 
-**Çözüm**: setupDI çağrıldığından emin ol
+**Solution**: Make sure `setupDI` is called
 
 ```dart
 // main.dart
@@ -487,13 +481,15 @@ void main() async {
   await setupDI(baseUrl: 'https://api.example.com');
   
   // Initialize AuthManager
-  await AuthManager.init(...);
+  await setupAuth(...);
   
   runApp(MyApp());
 }
 ```
 
-## 📊 Proje Yapısı Örneği
+---
+
+## 📊 Project Structure Example
 
 ```
 lib/
@@ -512,7 +508,7 @@ lib/
       view/
         home_screen.dart
   core/
-    base_bloc/          ← Base yapı
+    base_bloc/          ← Base structure
     managers/
       auth_manager/     ← Singleton AuthManager
     networking/
@@ -524,29 +520,35 @@ lib/
             api_manager.dart    ← ApiManager
 ```
 
-## 🔗 İlgili Dosyalar
+---
 
-- `lib/core/managers/auth_manager/auth/manager/auth_manager.dart` - AuthManager singleton
-- `lib/core/networking/core/di/service_locator.dart` - GetIt setup
-- `lib/core/networking/core/network/api/api_manager.dart` - ApiManager implementation
-- `lib/core/networking/core/utils/result.dart` - Result<T, E> pattern
+## 🔗 Related Files
 
-## 📖 Daha Fazla Bilgi
+- `packages/flutter_kit_auth/lib/auth/manager/auth_manager.dart` - AuthManager
+- `packages/flutter_kit_network/lib/core/di/service_locator.dart` - GetIt setup
+- `packages/flutter_kit_network/lib/core/network/api/api_manager.dart` - ApiManager implementation
+- `packages/flutter_kit_network/lib/core/utils/result.dart` - Result<T, E> pattern
+
+---
+
+## 📖 More Information
 
 - [Flutter Bloc Documentation](https://bloclibrary.dev/)
 - [Equatable Package](https://pub.dev/packages/equatable)
 - [GetIt - Service Locator](https://pub.dev/packages/get_it)
 
-## ✨ Özet
+---
 
-Bu base_bloc yapısı:
-- ✅ Mevcut `flutter_base_kit` projesine tamamen uyumlu
-- ✅ GetIt dependency injection kullanır
-- ✅ AuthManager singleton pattern'ı destekler
-- ✅ Result<T, ApiError> pattern ile çalışır
-- ✅ Active key sistemi ile multiple instance management
-- ✅ Lifecycle management (onInit, onReady, close)
-- ✅ Type-safe state management
-- ✅ Test-friendly architecture
+## ✨ Summary
 
-Detaylı örnekler için `example_usage.dart` dosyasına bakın! 🚀
+This base_bloc package:
+- ✅ Fully compatible with the current `flutter_base_kit` project
+- ✅ Uses GetIt dependency injection
+- ✅ Supports AuthManager registrations
+- ✅ Works with Result<T, ApiError> pattern
+- ✅ Handles multiple instances with the active key system
+- ✅ Provides lifecycle management (onInit, onReady, close)
+- ✅ Implements type-safe state management
+- ✅ Offers a test-friendly architecture
+
+See `example_usage.dart` for detailed examples! 🚀

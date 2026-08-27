@@ -1,5 +1,5 @@
 /// Interface for blocs/cubits with lifecycle methods
-/// BaseCubit ve BaseBloc bu interface'i implement eder
+/// Both BaseCubit and BaseBloc implement this interface
 abstract class LifecycleBloc {
   /// Called when Bloc/Cubit is created (optional)
   void onInit();

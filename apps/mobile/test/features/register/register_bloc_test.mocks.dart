@@ -7,20 +7,22 @@ import 'dart:async' as _i13;
 
 import 'package:flutter_kit_auth/auth/bloc/auth_status.dart' as _i14;
 import 'package:flutter_kit_auth/auth/domain/entity/auth_entity.dart' as _i18;
-import 'package:flutter_kit_auth/auth/domain/usecase/apple_sign_in_usecase.dart'
-    as _i8;
-import 'package:flutter_kit_auth/auth/domain/usecase/google_sign_in_usecase.dart'
-    as _i9;
+import 'package:flutter_kit_auth/auth/domain/enum/social_auth_provider.dart'
+    as _i19;
 import 'package:flutter_kit_auth/auth/domain/usecase/guest_sign_in_usecase.dart'
-    as _i10;
+    as _i9;
 import 'package:flutter_kit_auth/auth/domain/usecase/login_usecase.dart' as _i2;
 import 'package:flutter_kit_auth/auth/domain/usecase/logout_usecase.dart'
     as _i6;
 import 'package:flutter_kit_auth/auth/domain/usecase/me_usecase.dart' as _i4;
+import 'package:flutter_kit_auth/auth/domain/usecase/password_reset_usecase.dart'
+    as _i10;
 import 'package:flutter_kit_auth/auth/domain/usecase/refresh_usecase.dart'
     as _i7;
 import 'package:flutter_kit_auth/auth/domain/usecase/register_usecase.dart'
     as _i3;
+import 'package:flutter_kit_auth/auth/domain/usecase/social_sign_in_usecase.dart'
+    as _i8;
 import 'package:flutter_kit_auth/auth/domain/usecase/update_profile_usecase.dart'
     as _i5;
 import 'package:flutter_kit_auth/auth/manager/auth_manager.dart' as _i12;
@@ -78,26 +80,40 @@ class _FakeRefreshUseCase_5 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
-class _FakeAppleSignInUseCase_6 extends _i1.SmartFake
-    implements _i8.AppleSignInUseCase {
-  _FakeAppleSignInUseCase_6(Object parent, Invocation parentInvocation)
+class _FakeSocialSignInUseCase_6 extends _i1.SmartFake
+    implements _i8.SocialSignInUseCase {
+  _FakeSocialSignInUseCase_6(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeGoogleSignInUseCase_7 extends _i1.SmartFake
-    implements _i9.GoogleSignInUseCase {
-  _FakeGoogleSignInUseCase_7(Object parent, Invocation parentInvocation)
+class _FakeGuestSignInUseCase_7 extends _i1.SmartFake
+    implements _i9.GuestSignInUseCase {
+  _FakeGuestSignInUseCase_7(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeGuestSignInUseCase_8 extends _i1.SmartFake
-    implements _i10.GuestSignInUseCase {
-  _FakeGuestSignInUseCase_8(Object parent, Invocation parentInvocation)
+class _FakeStartPasswordResetUseCase_8 extends _i1.SmartFake
+    implements _i10.StartPasswordResetUseCase {
+  _FakeStartPasswordResetUseCase_8(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
-class _FakeTokenStore_9 extends _i1.SmartFake implements _i11.TokenStore {
-  _FakeTokenStore_9(Object parent, Invocation parentInvocation)
+class _FakeVerifyPasswordResetUseCase_9 extends _i1.SmartFake
+    implements _i10.VerifyPasswordResetUseCase {
+  _FakeVerifyPasswordResetUseCase_9(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeCompletePasswordResetUseCase_10 extends _i1.SmartFake
+    implements _i10.CompletePasswordResetUseCase {
+  _FakeCompletePasswordResetUseCase_10(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(parent, parentInvocation);
+}
+
+class _FakeTokenStore_11 extends _i1.SmartFake implements _i11.TokenStore {
+  _FakeTokenStore_11(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -193,59 +209,89 @@ class MockAuthManager extends _i1.Mock implements _i12.AuthManager {
           as _i7.RefreshUseCase);
 
   @override
-  _i8.AppleSignInUseCase get appleSignInUseCase =>
+  _i8.SocialSignInUseCase get socialSignInUseCase =>
       (super.noSuchMethod(
-            Invocation.getter(#appleSignInUseCase),
-            returnValue: _FakeAppleSignInUseCase_6(
+            Invocation.getter(#socialSignInUseCase),
+            returnValue: _FakeSocialSignInUseCase_6(
               this,
-              Invocation.getter(#appleSignInUseCase),
+              Invocation.getter(#socialSignInUseCase),
             ),
-            returnValueForMissingStub: _FakeAppleSignInUseCase_6(
+            returnValueForMissingStub: _FakeSocialSignInUseCase_6(
               this,
-              Invocation.getter(#appleSignInUseCase),
+              Invocation.getter(#socialSignInUseCase),
             ),
           )
-          as _i8.AppleSignInUseCase);
+          as _i8.SocialSignInUseCase);
 
   @override
-  _i9.GoogleSignInUseCase get googleSignInUseCase =>
-      (super.noSuchMethod(
-            Invocation.getter(#googleSignInUseCase),
-            returnValue: _FakeGoogleSignInUseCase_7(
-              this,
-              Invocation.getter(#googleSignInUseCase),
-            ),
-            returnValueForMissingStub: _FakeGoogleSignInUseCase_7(
-              this,
-              Invocation.getter(#googleSignInUseCase),
-            ),
-          )
-          as _i9.GoogleSignInUseCase);
-
-  @override
-  _i10.GuestSignInUseCase get guestSignInUseCase =>
+  _i9.GuestSignInUseCase get guestSignInUseCase =>
       (super.noSuchMethod(
             Invocation.getter(#guestSignInUseCase),
-            returnValue: _FakeGuestSignInUseCase_8(
+            returnValue: _FakeGuestSignInUseCase_7(
               this,
               Invocation.getter(#guestSignInUseCase),
             ),
-            returnValueForMissingStub: _FakeGuestSignInUseCase_8(
+            returnValueForMissingStub: _FakeGuestSignInUseCase_7(
               this,
               Invocation.getter(#guestSignInUseCase),
             ),
           )
-          as _i10.GuestSignInUseCase);
+          as _i9.GuestSignInUseCase);
+
+  @override
+  _i10.StartPasswordResetUseCase get startPasswordResetUseCase =>
+      (super.noSuchMethod(
+            Invocation.getter(#startPasswordResetUseCase),
+            returnValue: _FakeStartPasswordResetUseCase_8(
+              this,
+              Invocation.getter(#startPasswordResetUseCase),
+            ),
+            returnValueForMissingStub: _FakeStartPasswordResetUseCase_8(
+              this,
+              Invocation.getter(#startPasswordResetUseCase),
+            ),
+          )
+          as _i10.StartPasswordResetUseCase);
+
+  @override
+  _i10.VerifyPasswordResetUseCase get verifyPasswordResetUseCase =>
+      (super.noSuchMethod(
+            Invocation.getter(#verifyPasswordResetUseCase),
+            returnValue: _FakeVerifyPasswordResetUseCase_9(
+              this,
+              Invocation.getter(#verifyPasswordResetUseCase),
+            ),
+            returnValueForMissingStub: _FakeVerifyPasswordResetUseCase_9(
+              this,
+              Invocation.getter(#verifyPasswordResetUseCase),
+            ),
+          )
+          as _i10.VerifyPasswordResetUseCase);
+
+  @override
+  _i10.CompletePasswordResetUseCase get completePasswordResetUseCase =>
+      (super.noSuchMethod(
+            Invocation.getter(#completePasswordResetUseCase),
+            returnValue: _FakeCompletePasswordResetUseCase_10(
+              this,
+              Invocation.getter(#completePasswordResetUseCase),
+            ),
+            returnValueForMissingStub: _FakeCompletePasswordResetUseCase_10(
+              this,
+              Invocation.getter(#completePasswordResetUseCase),
+            ),
+          )
+          as _i10.CompletePasswordResetUseCase);
 
   @override
   _i11.TokenStore get tokenStore =>
       (super.noSuchMethod(
             Invocation.getter(#tokenStore),
-            returnValue: _FakeTokenStore_9(
+            returnValue: _FakeTokenStore_11(
               this,
               Invocation.getter(#tokenStore),
             ),
-            returnValueForMissingStub: _FakeTokenStore_9(
+            returnValueForMissingStub: _FakeTokenStore_11(
               this,
               Invocation.getter(#tokenStore),
             ),
@@ -441,44 +487,23 @@ class MockAuthManager extends _i1.Mock implements _i12.AuthManager {
           as _i13.Future<_i15.Result<_i18.AuthTokens?, _i16.ApiError>>);
 
   @override
-  _i13.Future<_i15.Result<void, _i16.ApiError>> signInWithApple(
+  _i13.Future<_i15.Result<void, _i16.ApiError>> signInWithSocial(
+    _i19.SocialAuthProvider? provider,
     String? idToken,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#signInWithApple, [idToken]),
+            Invocation.method(#signInWithSocial, [provider, idToken]),
             returnValue: _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
               _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
                 this,
-                Invocation.method(#signInWithApple, [idToken]),
+                Invocation.method(#signInWithSocial, [provider, idToken]),
               ),
             ),
             returnValueForMissingStub:
                 _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
                   _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
                     this,
-                    Invocation.method(#signInWithApple, [idToken]),
-                  ),
-                ),
-          )
-          as _i13.Future<_i15.Result<void, _i16.ApiError>>);
-
-  @override
-  _i13.Future<_i15.Result<void, _i16.ApiError>> signInWithGoogle(
-    String? idToken,
-  ) =>
-      (super.noSuchMethod(
-            Invocation.method(#signInWithGoogle, [idToken]),
-            returnValue: _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
-              _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
-                this,
-                Invocation.method(#signInWithGoogle, [idToken]),
-              ),
-            ),
-            returnValueForMissingStub:
-                _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
-                  _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
-                    this,
-                    Invocation.method(#signInWithGoogle, [idToken]),
+                    Invocation.method(#signInWithSocial, [provider, idToken]),
                   ),
                 ),
           )
@@ -499,6 +524,96 @@ class MockAuthManager extends _i1.Mock implements _i12.AuthManager {
                   _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
                     this,
                     Invocation.method(#signInAsGuest, []),
+                  ),
+                ),
+          )
+          as _i13.Future<_i15.Result<void, _i16.ApiError>>);
+
+  @override
+  _i13.Future<_i15.Result<void, _i16.ApiError>> startPasswordReset(
+    String? email,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#startPasswordReset, [email]),
+            returnValue: _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
+              _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
+                this,
+                Invocation.method(#startPasswordReset, [email]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
+                  _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
+                    this,
+                    Invocation.method(#startPasswordReset, [email]),
+                  ),
+                ),
+          )
+          as _i13.Future<_i15.Result<void, _i16.ApiError>>);
+
+  @override
+  _i13.Future<_i15.Result<void, _i16.ApiError>> verifyPasswordReset({
+    required String? email,
+    required String? code,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#verifyPasswordReset, [], {
+              #email: email,
+              #code: code,
+            }),
+            returnValue: _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
+              _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
+                this,
+                Invocation.method(#verifyPasswordReset, [], {
+                  #email: email,
+                  #code: code,
+                }),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
+                  _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
+                    this,
+                    Invocation.method(#verifyPasswordReset, [], {
+                      #email: email,
+                      #code: code,
+                    }),
+                  ),
+                ),
+          )
+          as _i13.Future<_i15.Result<void, _i16.ApiError>>);
+
+  @override
+  _i13.Future<_i15.Result<void, _i16.ApiError>> completePasswordReset({
+    required String? email,
+    required String? code,
+    required String? newPassword,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#completePasswordReset, [], {
+              #email: email,
+              #code: code,
+              #newPassword: newPassword,
+            }),
+            returnValue: _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
+              _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
+                this,
+                Invocation.method(#completePasswordReset, [], {
+                  #email: email,
+                  #code: code,
+                  #newPassword: newPassword,
+                }),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i13.Future<_i15.Result<void, _i16.ApiError>>.value(
+                  _i17.dummyValue<_i15.Result<void, _i16.ApiError>>(
+                    this,
+                    Invocation.method(#completePasswordReset, [], {
+                      #email: email,
+                      #code: code,
+                      #newPassword: newPassword,
+                    }),
                   ),
                 ),
           )

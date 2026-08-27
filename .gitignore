@@ -107,6 +107,10 @@ unlinked_spec.ds
 # Coverage
 coverage/
 
+# Generated i18n output — regenerate with `melos run gen:i18n`; the header
+# carries a build timestamp and string count, so it conflicts on every merge.
+apps/mobile/lib/core/localization/i18n/strings*.g.dart
+
 # Symbols
 app.*.symbols
 

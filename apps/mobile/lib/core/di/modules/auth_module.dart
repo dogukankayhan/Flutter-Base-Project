@@ -8,5 +8,8 @@ Future<void> setupAuthModule(GetIt getIt) async {
     getIt: getIt,
     apiManager: getIt<netapi.ApiManager>(),
     tokenStore: getIt<TokenStore>(),
+    refreshApiManager: getIt<netapi.ApiManager>(
+      instanceName: 'refreshApiManager',
+    ),
   );
 }

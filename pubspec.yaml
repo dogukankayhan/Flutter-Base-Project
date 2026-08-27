@@ -49,3 +49,7 @@ melos:
     gen:feature:
       run: dart scripts/gen_feature.dart
       description: Yeni feature scaffold oluştur (interaktif)
+
+    gen:i18n:
+      run: cd apps/mobile && dart run slang
+      description: Generate strings*.g.dart from the .i18n.json sources (REQUIRED after a fresh checkout)

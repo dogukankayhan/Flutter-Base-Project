@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_kit_network/core/di/service_locator.dart';
 
 /// Active cubit helper functions
-/// GetIt kullanarak cubit'leri key'li veya key'siz register/unregister eder
+/// Registers/unregisters cubits with or without keys using GetIt
 ///
 /// **When to use:** When multiple screens of the same type can be open in the navigation stack simultaneously
 /// can be simultaneous (e.g. two different customer profile pages open).
@@ -54,7 +54,7 @@ void unpublishActive<T extends Object>({String? key}) {
   _activeKeys.remove(instanceName);
 }
 
-/// Aktif cubit'i al (nullable)
+/// Get active cubit (nullable)
 T? getActiveOrNull<T extends Object>({String? key}) {
   final instanceName = key ?? '_default_${T.toString()}';
 

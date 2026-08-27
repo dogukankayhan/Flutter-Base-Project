@@ -82,7 +82,7 @@ class MockErrorInterceptorHandler implements ErrorInterceptorHandler {
   }
 
   @override
-  void reject(DioException error) {
+  void reject(DioException error, [bool primary = false]) {
     rejectedError = error;
     if (!completer.isCompleted) completer.complete();
   }

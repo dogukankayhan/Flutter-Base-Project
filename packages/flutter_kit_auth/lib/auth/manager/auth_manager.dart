@@ -4,17 +4,29 @@ import 'package:flutter_kit_network/core/network/error/api_error.dart';
 import 'package:flutter_kit_network/core/utils/result.dart';
 import '../bloc/auth_status.dart';
 import '../domain/entity/auth_entity.dart';
+import '../domain/entity/password_reset_entity.dart';
 import '../domain/entity/profile_entity.dart';
+import '../domain/enum/social_auth_provider.dart';
 import '../domain/usecase/login_usecase.dart';
-import '../domain/usecase/register_usecase.dart';
-import '../domain/usecase/me_usecase.dart';
-import '../domain/usecase/update_profile_usecase.dart';
 import '../domain/usecase/logout_usecase.dart';
+import '../domain/usecase/me_usecase.dart';
+import '../domain/usecase/password_reset_usecase.dart';
 import '../domain/usecase/refresh_usecase.dart';
-import '../domain/usecase/apple_sign_in_usecase.dart';
-import '../domain/usecase/google_sign_in_usecase.dart';
+import '../domain/usecase/register_usecase.dart';
+import '../domain/usecase/social_sign_in_usecase.dart';
 import '../domain/usecase/guest_sign_in_usecase.dart';
+import '../domain/usecase/update_profile_usecase.dart';
 import '../token/token_store.dart';
+
+/// Reads the device's current push-registration token, or null when there is
+/// none — notifications refused, or the grant not yet answered.
+///
+/// A callback rather than a dependency: the token comes from the Firebase
+/// package, and this package must stay unaware of it — the same
+/// callback-based decoupling as `NotificationDeepLinkHandler.onNavigate` (see
+/// CLAUDE.md, Critical Pattern 6). The app layer, which already depends on
+/// both, supplies the wire.
+typedef FcmTokenProvider = Future<String?> Function();
 
 /// managed via getIt — static singleton pattern removed.
 /// Injection: `getIt.registerSingleton(await AuthManager.create(...))`
@@ -26,13 +38,17 @@ class AuthManager {
     required this.updateProfileUseCase,
     required this.logoutUseCase,
     required this.refreshUseCase,
-    required this.appleSignInUseCase,
-    required this.googleSignInUseCase,
+    required this.socialSignInUseCase,
     required this.guestSignInUseCase,
+    required this.startPasswordResetUseCase,
+    required this.verifyPasswordResetUseCase,
+    required this.completePasswordResetUseCase,
     required this.tokenStore,
+    this.fcmTokenProvider,
   });
 
-  /// Creates the object and restores session if token is saved.
+  /// Creates the object, restoring a previously saved session (if any) so the
+  /// user stays logged in across app restarts.
   static Future<AuthManager> create({
     required LoginUseCase loginUseCase,
     required RegisterUseCase registerUseCase,
@@ -40,10 +56,13 @@ class AuthManager {
     required UpdateProfileUseCase updateProfileUseCase,
     required LogoutUseCase logoutUseCase,
     required RefreshUseCase refreshUseCase,
-    required AppleSignInUseCase appleSignInUseCase,
-    required GoogleSignInUseCase googleSignInUseCase,
+    required SocialSignInUseCase socialSignInUseCase,
     required GuestSignInUseCase guestSignInUseCase,
+    required StartPasswordResetUseCase startPasswordResetUseCase,
+    required VerifyPasswordResetUseCase verifyPasswordResetUseCase,
+    required CompletePasswordResetUseCase completePasswordResetUseCase,
     required TokenStore tokenStore,
+    FcmTokenProvider? fcmTokenProvider,
   }) async {
     final manager = AuthManager._(
       loginUseCase: loginUseCase,
@@ -52,10 +71,13 @@ class AuthManager {
       updateProfileUseCase: updateProfileUseCase,
       logoutUseCase: logoutUseCase,
       refreshUseCase: refreshUseCase,
-      appleSignInUseCase: appleSignInUseCase,
-      googleSignInUseCase: googleSignInUseCase,
+      socialSignInUseCase: socialSignInUseCase,
       guestSignInUseCase: guestSignInUseCase,
+      startPasswordResetUseCase: startPasswordResetUseCase,
+      verifyPasswordResetUseCase: verifyPasswordResetUseCase,
+      completePasswordResetUseCase: completePasswordResetUseCase,
       tokenStore: tokenStore,
+      fcmTokenProvider: fcmTokenProvider,
     );
     manager._tokens = await tokenStore.read();
     if (manager._tokens != null) {
@@ -70,10 +92,13 @@ class AuthManager {
   final UpdateProfileUseCase updateProfileUseCase;
   final LogoutUseCase logoutUseCase;
   final RefreshUseCase refreshUseCase;
-  final AppleSignInUseCase appleSignInUseCase;
-  final GoogleSignInUseCase googleSignInUseCase;
+  final SocialSignInUseCase socialSignInUseCase;
   final GuestSignInUseCase guestSignInUseCase;
+  final StartPasswordResetUseCase startPasswordResetUseCase;
+  final VerifyPasswordResetUseCase verifyPasswordResetUseCase;
+  final CompletePasswordResetUseCase completePasswordResetUseCase;
   final TokenStore tokenStore;
+  final FcmTokenProvider? fcmTokenProvider;
 
   AuthTokens? _tokens;
   Profile? _profile;
@@ -84,7 +109,7 @@ class AuthManager {
   final _statusController = StreamController<AuthStatus>.broadcast();
 
   /// Stream to listen for auth state changes.
-  /// AuthBloc bu stream'e subscribe olur.
+  /// AuthBloc subscribes to this stream.
   Stream<AuthStatus> get statusStream => _statusController.stream;
 
   AuthTokens? get tokens => _tokens;
@@ -108,7 +133,13 @@ class AuthManager {
   Future<Result<void, ApiError>> login(String email, String password) async {
     _setBusy(true);
     try {
-      final result = await loginUseCase(email: email, password: password);
+      final result = await loginUseCase(
+        LoginRequest(
+          email: email,
+          password: password,
+          fcmToken: await fcmTokenProvider?.call(),
+        ),
+      );
       return await result.when(
         ok: (tokens) async {
           _tokens = tokens;
@@ -132,10 +163,13 @@ class AuthManager {
     _setBusy(true);
     try {
       final result = await registerUseCase(
-        email: email,
-        password: password,
-        firstName: firstName,
-        lastName: lastName,
+        RegisterRequest(
+          email: email,
+          password: password,
+          firstName: firstName,
+          lastName: lastName,
+          fcmToken: await fcmTokenProvider?.call(),
+        ),
       );
       return await result.when(
         ok: (tokens) async {
@@ -247,28 +281,19 @@ class AuthManager {
     }
   }
 
-  Future<Result<void, ApiError>> signInWithApple(String idToken) async {
+  Future<Result<void, ApiError>> signInWithSocial(
+    SocialAuthProvider provider,
+    String idToken,
+  ) async {
     _setBusy(true);
     try {
-      final result = await appleSignInUseCase(idToken: idToken);
-      return await result.when(
-        ok: (tokens) async {
-          _tokens = tokens;
-          await tokenStore.write(tokens);
-          await fetchMe();
-          return const Ok(null);
-        },
-        err: (error) => Err(error),
+      final result = await socialSignInUseCase(
+        SocialSignInRequest(
+          provider: provider,
+          idToken: idToken,
+          fcmToken: await fcmTokenProvider?.call(),
+        ),
       );
-    } finally {
-      _setBusy(false);
-    }
-  }
-
-  Future<Result<void, ApiError>> signInWithGoogle(String idToken) async {
-    _setBusy(true);
-    try {
-      final result = await googleSignInUseCase(idToken: idToken);
       return await result.when(
         ok: (tokens) async {
           _tokens = tokens;
@@ -300,6 +325,28 @@ class AuthManager {
       _setBusy(false);
     }
   }
+
+  Future<Result<void, ApiError>> startPasswordReset(String email) =>
+      startPasswordResetUseCase(PasswordResetStartRequest(email: email));
+
+  Future<Result<void, ApiError>> verifyPasswordReset({
+    required String email,
+    required String code,
+  }) => verifyPasswordResetUseCase(
+    PasswordResetVerifyRequest(email: email, code: code),
+  );
+
+  Future<Result<void, ApiError>> completePasswordReset({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) => completePasswordResetUseCase(
+    PasswordResetCompleteRequest(
+      email: email,
+      code: code,
+      newPassword: newPassword,
+    ),
+  );
 
   void _setBusy(bool value) {
     _busy = value;

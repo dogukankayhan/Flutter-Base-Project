@@ -1,3 +1,4 @@
+import '../phone/country_phone.dart';
 import 'validator_rule.dart';
 import 'rules/required_validator.dart';
 import 'rules/min_length_validator.dart';
@@ -9,6 +10,11 @@ import 'rules/min_validator.dart';
 import 'rules/max_validator.dart';
 import 'rules/equals_validator.dart';
 import 'rules/custom_validator.dart';
+import 'rules/phone_validator.dart';
+import 'rules/iban_validator.dart';
+import 'rules/age_validator.dart';
+import 'rules/date_validator.dart';
+import 'rules/url_validator.dart';
 
 /// Static factory for all built-in validators.
 ///
@@ -56,4 +62,30 @@ abstract final class Validators {
   /// Custom validation with a lambda.
   static Validator<T> custom<T>(String? Function(T? value) validate) =>
       CustomValidator<T>(validate);
+
+  /// Phone number shaped like [country] expects — Türkiye (10 digits
+  /// starting with 5) by default. Accepts formatted or raw digit string.
+  static Validator<String> phone({
+    CountryPhone country = CountryPhones.defaultCountry,
+    String? message,
+  }) => PhoneValidator(
+    digits: country.digitCount,
+    mobilePrefixes: country.mobilePrefixes,
+    message: message,
+  );
+
+  /// Turkish IBAN: TR + 24 digits.
+  /// Accepts formatted "TR00 0000 …" or raw string.
+  static Validator<String> iban({String? message}) => IbanValidator(message);
+
+  /// Non-blocking age check: warns when parsed integer < [minAge].
+  /// Returns null for empty/non-numeric values (pair with Validators.required separately).
+  static Validator<String> ageWarning({int minAge = 18, String? message}) =>
+      AgeValidator(minAge: minAge, message: message);
+
+  /// Date format DD.MM.YYYY with real calendar validation.
+  static Validator<String> date({String? message}) => DateValidator(message);
+
+  /// URL format starting with http:// or https://.
+  static Validator<String> url({String? message}) => UrlValidator(message);
 }

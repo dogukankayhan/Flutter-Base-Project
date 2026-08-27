@@ -41,11 +41,11 @@ class DioClient implements HttpClient {
 
     // Interceptor order is important:
     // 1. Connectivity → If no internet, reject immediately, don't proceed
-    // 2. Auth         → Token ekle
+    // 2. Auth         → Add token
     // 3. RateLimiter  → Rate limit control
-    // 4. Cache        → Cache'de varsa server'a gitme
-    // 5. Retry        → Hata olursa tekrar dene
-    // 6. Refresh      → 401'de token yenile ve request'i tekrar at
+    // 4. Cache        → Do not go to server if exists in cache
+    // 5. Retry        → Retry on error
+    // 6. Refresh      → Refresh token on 401 and retry request
     // 7. Logging      → At the end, log everything
 
     // 1. Connectivity
@@ -93,7 +93,7 @@ class DioClient implements HttpClient {
       );
     }
 
-    // 7. Logging (en son)
+    // 7. Logging (last)
     if (config.enableLogging) {
       dio.interceptors.add(LoggingInterceptor());
     }

@@ -145,6 +145,23 @@ Future<void> setupNetworking({
     ),
   );
 
+  // A second, interceptor-free ApiManager used only for the token-refresh
+  // HTTP call. It must never carry AuthInterceptor/RefreshTokenInterceptor:
+  // the refresh call is what RefreshTokenInterceptor's onError waits on, so
+  // routing it back through that same interceptor (e.g. if the refresh
+  // token itself is expired and the call also comes back 401) would re-enter
+  // its refresh lock and hang forever. It also gets its own RequestQueue so
+  // ordinary API traffic can never starve it of a concurrency slot.
+  getIt.registerLazySingleton<ApiManager>(
+    () => DioApiManager(
+      client: DioClient(apiConfig, networkInfo: getIt<NetworkInfo>()),
+      serializer: const JsonSerializer(),
+      requestQueue: RequestQueue(maxConcurrent: 1),
+      analyticsManager: analyticsManager,
+    ),
+    instanceName: 'refreshApiManager',
+  );
+
   logger.info('✅ Networking initialized for ${config.environment} environment');
 }
 
